@@ -70,7 +70,10 @@ const Footer = () => {
         {/* Social Media y Copyright */}
         <div className="flex flex-col items-center justify-between pt-8 border-t border-gray-700 md:flex-row">
           <div className="mb-4 md:mb-0">
-            <Link to="/" className="text-xl text-white font-adlam">Dog Walk</Link>
+            <Link to="/" className="flex items-center text-xl text-white font-adlam">
+              <img src="/icons/Pet Commands Summon.svg" alt="Dog Walk Logo" className="w-8 h-8 mr-2" />
+              Dog Walk
+            </Link>
           </div>
           <div className="flex mb-4 space-x-4 md:mb-0">
             <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-white">
