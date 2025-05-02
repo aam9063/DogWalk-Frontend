@@ -1,6 +1,6 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../Context/useAuth';
+import useAuthStore from '../store/authStore';
 import { FaArrowLeft, FaHome, FaUser, FaDog, FaCalendarAlt, FaCreditCard, FaBell, FaClipboardList } from 'react-icons/fa';
 
 // Componente de carga para usar con Suspense
@@ -15,7 +15,13 @@ const LoadingIndicator = () => (
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated, loading, logout, verifyAuth } = useAuth();
+  // Usar selectores estándar de Zustand
+  const user = useAuthStore(state => state.user);
+  const isAuthenticated = useAuthStore(state => state.isAuthenticated);
+  const loading = useAuthStore(state => state.loading);
+  const logout = useAuthStore(state => state.logout);
+  const verifyAuth = useAuthStore(state => state.verifyAuth);
+  
   const [activeTab, setActiveTab] = useState('resumen');
   const [isPageLoading, setIsPageLoading] = useState(true);
 

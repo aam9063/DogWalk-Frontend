@@ -8,12 +8,14 @@ import HowItWorks from './Pages/HowItWorks'
 import Services from './Pages/Services'
 import Login from './Pages/Login'
 import Dashboard from './Pages/Dashboard'
-import { useAuth } from './Context/useAuth'
+import useAuthStore from './store/authStore'
+import useInitAuth from './hooks/useInitAuth'
 import './App.css'
 
 // Componente para proteger rutas
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+  const isAuthenticated = useAuthStore(state => state.isAuthenticated);
+  const loading = useAuthStore(state => state.loading);
   
   // Mientras se verifica la autenticación, mostrar un indicador de carga
   if (loading) {
@@ -37,6 +39,9 @@ const ProtectedRoute = ({ children }) => {
 }
 
 function App() {
+  // Inicializar autenticación al cargar la app
+  useInitAuth();
+
   return (
     <BrowserRouter>
       <Routes>

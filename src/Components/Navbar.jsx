@@ -1,8 +1,8 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { create } from 'zustand';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { FaSearch, FaBars, FaTimes, FaUser } from 'react-icons/fa';
-import { useAuth } from '../Context/useAuth';
+import useAuthStore from '../store/authStore';
 
 // Store para el estado del carrito
 const useCartStore = create((set) => ({
@@ -42,8 +42,12 @@ const Navbar = () => {
   const searchInputRef = useRef(null);
   const userMenuRef = useRef(null);
   
-  // Usar el contexto de autenticación
-  const { user, isAuthenticated, loading, logout, verifyAuth } = useAuth();
+  // Usar el store de autenticación con selectores
+  const user = useAuthStore(state => state.user);
+  const isAuthenticated = useAuthStore(state => state.isAuthenticated);
+  const loading = useAuthStore(state => state.loading);
+  const logout = useAuthStore(state => state.logout);
+  const verifyAuth = useAuthStore(state => state.verifyAuth);
   
   // Verificar estado de autenticación al cargar el componente
   useEffect(() => {
@@ -51,7 +55,7 @@ const Navbar = () => {
     if (localStorage.getItem('token') && !user && !loading) {
       verifyAuth();
     }
-  }, []);
+  }, [user, loading, verifyAuth]); // Includimos verifyAuth como dependencia ya que ahora es estable
   
   // Enfocar el input cuando se abre la barra de búsqueda
   useEffect(() => {
@@ -61,7 +65,7 @@ const Navbar = () => {
   }, [isSearchOpen]);
   
   // Manejar la búsqueda cuando se presiona Enter
-  const handleSearch = (e) => {
+  const handleSearch = useCallback((e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       // Aquí irá la lógica de búsqueda cuando tengamos contenido
@@ -71,10 +75,10 @@ const Navbar = () => {
       closeSearch();
       setSearchQuery('');
     }
-  };
+  }, [searchQuery, closeSearch]);
   
   // Cerrar la búsqueda si se hace clic fuera
-  const handleClickOutside = (e) => {
+  const handleClickOutside = useCallback((e) => {
     if (isSearchOpen && searchInputRef.current && !searchInputRef.current.contains(e.target)) {
       closeSearch();
     }
@@ -82,14 +86,14 @@ const Navbar = () => {
     if (isUserMenuOpen && userMenuRef.current && !userMenuRef.current.contains(e.target)) {
       closeUserMenu();
     }
-  };
+  }, [isSearchOpen, isUserMenuOpen, closeSearch, closeUserMenu]);
   
   useEffect(() => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isSearchOpen, isUserMenuOpen]);
+  }, [handleClickOutside]);
 
   // Cerrar menú móvil al cambiar el tamaño de la ventana
   useEffect(() => {
@@ -106,17 +110,17 @@ const Navbar = () => {
   }, [closeMobileMenu]);
   
   // Manejar el cierre de sesión
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     logout();
     closeUserMenu();
     navigate('/');
-  };
+  }, [logout, closeUserMenu, navigate]);
 
   // Ir al dashboard
-  const goToDashboard = () => {
+  const goToDashboard = useCallback(() => {
     navigate('/dashboard');
     closeUserMenu();
-  };
+  }, [navigate, closeUserMenu]);
   
   // Debug info - solo para desarrollo
   useEffect(() => {

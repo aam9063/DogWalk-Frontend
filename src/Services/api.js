@@ -21,8 +21,30 @@ export const fetcher = async (url, options = {}) => {
   });
   
   if (!response.ok) {
-    const error = new Error('Error en la petición API');
-    error.info = await response.json();
+    // Personalizar mensaje según el código de estado
+    let errorMessage = '';
+    
+    if (response.status === 401 || response.status === 403) {
+      errorMessage = 'Credenciales incorrectas';
+    } else if (response.status === 400) {
+      errorMessage = 'Datos inválidos';
+    } else if (response.status === 404) {
+      errorMessage = 'Recurso no encontrado';
+    } else if (response.status >= 500) {
+      errorMessage = 'Error en el servidor';
+    } else {
+      errorMessage = 'Error en la petición API';
+    }
+    
+    const error = new Error(errorMessage);
+    
+    try {
+      error.info = await response.json();
+    } catch {
+      // Si hay un error al parsear el JSON, usar mensaje predeterminado
+      error.info = { message: errorMessage };
+    }
+    
     error.status = response.status;
     throw error;
   }

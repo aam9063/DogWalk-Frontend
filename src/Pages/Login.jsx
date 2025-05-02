@@ -1,19 +1,24 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../Context/useAuth';
+import useAuthStore from '../store/authStore';
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
+  
+  // Usar selectores estándar de Zustand
+  const login = useAuthStore(state => state.login);
+  const isAuthenticated = useAuthStore(state => state.isAuthenticated);
+  const error = useAuthStore(state => state.error);
+  
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [loginError, setLoginError] = useState(null);
 
   // Verificar si hay mensajes de estado (por ejemplo, después de registro exitoso)
   useEffect(() => {
@@ -26,7 +31,7 @@ const Login = () => {
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem('token');
-      if (token) {
+      if (token || isAuthenticated) {
         setIsRedirecting(true);
         // Pequeño retraso para evitar parpadeos
         setTimeout(() => {
@@ -36,23 +41,31 @@ const Login = () => {
     };
     
     checkAuth();
-  }, [navigate]);
+  }, [navigate, isAuthenticated]);
+
+  // Mostrar error de autenticación del store
+  useEffect(() => {
+    if (error) {
+      setLoginError(error);
+    }
+  }, [error]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
+  // Usar useCallback para memoizar la función
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     
     if (loading || isRedirecting) return;
     
     setLoading(true);
-    setError(null);
+    setLoginError(null);
     
     try {
-      // Usar el contexto de autenticación para manejar el login
+      // Usar la acción de login de Zustand
       await login(formData);
       
       // Indicar que estamos redirigiendo para evitar múltiples navegaciones
@@ -64,12 +77,15 @@ const Login = () => {
       }, 100);
     } catch (error) {
       console.error('Error de inicio de sesión:', error);
-      setError(error.info?.message || 'Credenciales incorrectas');
+      
+      // Siempre mostrar un mensaje amigable, independientemente del error
+      const errorMessage = error.message || 'Credenciales incorrectas';
+      setLoginError(errorMessage);
       setIsRedirecting(false);
     } finally {
       setLoading(false);
     }
-  };
+  }, [formData, loading, isRedirecting, login, navigate]);
 
   // Si estamos redirigiendo, mostrar un estado de carga
   if (isRedirecting) {
@@ -111,9 +127,9 @@ const Login = () => {
             </div>
           )}
           
-          {error && (
+          {loginError && (
             <div className="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-md">
-              {error}
+              {loginError}
             </div>
           )}
           
