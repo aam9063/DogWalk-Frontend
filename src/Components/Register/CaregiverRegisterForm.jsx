@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react';
 import { FaArrowLeft, FaGoogle } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import authService from '../../Services/authService';
+import serviceService from '../../Services/serviceService';
 
 const CaregiverRegisterForm = ({ onBack }) => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     dni: '',
     nombre: '',
@@ -17,11 +21,29 @@ const CaregiverRegisterForm = ({ onBack }) => {
   });
   
   const [loading, setLoading] = useState(false);
-  const serviciosDisponibles = [
-    { id: '1', nombre: 'Paseo de perros', precio: 0 },
-    { id: '2', nombre: 'Alojamiento en casa', precio: 0 },
-    { id: '3', nombre: 'Guardería de día', precio: 0 }
-  ];
+  const [errorMessage, setErrorMessage] = useState(null);
+  const [serviciosDisponibles, setServiciosDisponibles] = useState([]);
+  const [loadingServicios, setLoadingServicios] = useState(true);
+  const [serviceError, setServiceError] = useState(null);
+  
+  // Obtener servicios disponibles desde la API
+  useEffect(() => {
+    const fetchServicios = async () => {
+      setLoadingServicios(true);
+      setServiceError(null);
+      try {
+        const data = await serviceService.getAll();
+        setServiciosDisponibles(data);
+      } catch (error) {
+        console.error('Error al obtener servicios:', error);
+        setServiceError('No se pudieron cargar los servicios disponibles. Por favor, intenta nuevamente más tarde.');
+      } finally {
+        setLoadingServicios(false);
+      }
+    };
+    
+    fetchServicios();
+  }, []);
   
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -32,11 +54,17 @@ const CaregiverRegisterForm = ({ onBack }) => {
     const isChecked = e.target.checked;
     
     setFormData(prev => {
-      // Si está marcado, agregamos el servicio
+      // Si está marcado, agregamos el servicio con el precio de referencia
       if (isChecked) {
+        const servicio = serviciosDisponibles.find(s => s.id === servicioId);
+        const precioReferencia = servicio ? servicio.precioReferencia : 0;
+        
         return {
           ...prev,
-          servicios: [...prev.servicios, { servicioId, precio: 0 }]
+          servicios: [...prev.servicios, { 
+            servicioId, 
+            precio: precioReferencia // Usamos el precio de referencia
+          }]
         };
       }
       // Si está desmarcado, lo quitamos
@@ -85,41 +113,53 @@ const CaregiverRegisterForm = ({ onBack }) => {
     
     // Validar que las contraseñas coincidan
     if (formData.password !== formData.confirmPassword) {
-      alert('Las contraseñas no coinciden');
+      setErrorMessage('Las contraseñas no coinciden');
       return;
     }
     
     // Validar que haya seleccionado al menos un servicio
     if (formData.servicios.length === 0) {
-      alert('Debe seleccionar al menos un servicio');
+      setErrorMessage('Debe seleccionar al menos un servicio');
       return;
     }
     
-    // Aquí se haría la petición HTTP
+    // Validar que todos los servicios tengan un precio mayor que cero
+    const serviciosSinPrecio = formData.servicios.filter(s => s.precio <= 0);
+    if (serviciosSinPrecio.length > 0) {
+      setErrorMessage('Todos los servicios seleccionados deben tener un precio mayor que 0');
+      return;
+    }
+    
     setLoading(true);
+    setErrorMessage(null);
     
     try {
-      // Simulación de petición
-      console.log('Datos del cuidador a enviar:', formData);
+      // Preparar los datos para el formato esperado por la API
+      const caregiverData = {
+        dni: formData.dni,
+        nombre: formData.nombre,
+        apellido: formData.apellido,
+        direccion: formData.direccion,
+        email: formData.email,
+        password: formData.password,
+        confirmPassword: formData.confirmPassword,
+        telefono: formData.telefono,
+        latitud: formData.latitud,
+        longitud: formData.longitud,
+        servicios: formData.servicios.map(s => ({
+          servicioId: s.servicioId,
+          precio: s.precio
+        }))
+      };
       
-      // La petición HTTP iría aquí
-      // const response = await fetch('/api/registro/cuidador', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(formData)
-      // });
+      // Llamar al servicio de registro
+      await authService.registerCaregiver(caregiverData);
       
-      // if (!response.ok) throw new Error('Error en el registro');
-      
-      // const data = await response.json();
-      // console.log('Respuesta del servidor:', data);
-      
-      // Redirección o mensaje de éxito
-      alert('Registro exitoso! (simulado)');
-      
+      // Redirección a login con mensaje de éxito
+      navigate('/login', { state: { registered: true, message: 'Registro exitoso. Ahora puedes iniciar sesión.' } });
     } catch (error) {
       console.error('Error en el registro:', error);
-      alert('Error en el registro. Intente nuevamente.');
+      setErrorMessage(error.info?.message || 'Error en el registro. Intente nuevamente.');
     } finally {
       setLoading(false);
     }
@@ -138,6 +178,18 @@ const CaregiverRegisterForm = ({ onBack }) => {
         <FaGoogle className="text-red-500" />
         <span>Regístrate con Google</span>
       </button>
+      
+      {serviceError && (
+        <div className="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-md">
+          {serviceError}
+        </div>
+      )}
+      
+      {errorMessage && (
+        <div className="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-md">
+          {errorMessage}
+        </div>
+      )}
       
       <form onSubmit={handleSubmit}>
         <div className="space-y-4">
@@ -262,44 +314,59 @@ const CaregiverRegisterForm = ({ onBack }) => {
             />
           </div>
           
-          {/* Campos específicos del cuidador */}
+          {/* Sección de servicios actualizada */}
           <div>
             <label className="block mb-1 text-sm font-medium text-gray-700">
               Servicios ofrecidos:
             </label>
             <div className="p-3 border border-gray-300 rounded-md">
-              {serviciosDisponibles.map(servicio => (
-                <div key={servicio.id} className="flex flex-col mb-3 last:mb-0">
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id={`servicio-${servicio.id}`}
-                      onChange={(e) => handleServicioChange(e, servicio.id)}
-                      className="mr-2"
-                    />
-                    <label htmlFor={`servicio-${servicio.id}`} className="mr-2">
-                      {servicio.nombre}
-                    </label>
-                  </div>
-                  
-                  {formData.servicios.some(s => s.servicioId === servicio.id) && (
-                    <div className="mt-2 ml-6">
-                      <label htmlFor={`precio-${servicio.id}`} className="block mb-1 text-xs text-gray-600">
-                        Precio (€/hora):
-                      </label>
+              {loadingServicios ? (
+                <p className="text-center text-gray-500">Cargando servicios...</p>
+              ) : serviciosDisponibles.length === 0 ? (
+                <p className="text-center text-gray-500">No hay servicios disponibles</p>
+              ) : (
+                serviciosDisponibles.map(servicio => (
+                  <div key={servicio.id} className="flex flex-col mb-3 last:mb-0">
+                    <div className="flex items-start">
                       <input
-                        type="number"
-                        id={`precio-${servicio.id}`}
-                        min="0"
-                        step="0.5"
-                        value={formData.servicios.find(s => s.servicioId === servicio.id)?.precio || 0}
-                        onChange={(e) => handlePrecioChange(e, servicio.id)}
-                        className="w-24 px-2 py-1 border border-gray-300 rounded-md"
+                        type="checkbox"
+                        id={`servicio-${servicio.id}`}
+                        onChange={(e) => handleServicioChange(e, servicio.id)}
+                        className="mt-1 mr-2"
                       />
+                      <div>
+                        <label htmlFor={`servicio-${servicio.id}`} className="font-medium">
+                          {servicio.nombre}
+                        </label>
+                        <p className="text-sm text-gray-600">{servicio.descripcion}</p>
+                        <p className="text-xs text-gray-500">
+                          Precio referencia: {servicio.precioReferencia}€
+                        </p>
+                        <p className="mt-1 text-xs text-gray-500">
+                          Recomendado: Entre {Math.max(0, servicio.precioReferencia * 0.8)}€ y {servicio.precioReferencia * 1.2}€
+                        </p>
+                      </div>
                     </div>
-                  )}
-                </div>
-              ))}
+                    
+                    {formData.servicios.some(s => s.servicioId === servicio.id) && (
+                      <div className="mt-2 ml-6">
+                        <label htmlFor={`precio-${servicio.id}`} className="block mb-1 text-xs text-gray-600">
+                          Tu precio (€/hora):
+                        </label>
+                        <input
+                          type="number"
+                          id={`precio-${servicio.id}`}
+                          min="0"
+                          step="0.5"
+                          value={formData.servicios.find(s => s.servicioId === servicio.id)?.precio || 0}
+                          onChange={(e) => handlePrecioChange(e, servicio.id)}
+                          className="w-24 px-2 py-1 border border-gray-300 rounded-md"
+                        />
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
             </div>
           </div>
           

@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { FaArrowLeft, FaGoogle } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import authService from '../../Services/authService';
 
 const UserRegisterForm = ({ onBack }) => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     dni: '',
     nombre: '',
@@ -14,6 +17,7 @@ const UserRegisterForm = ({ onBack }) => {
   });
   
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -25,35 +29,34 @@ const UserRegisterForm = ({ onBack }) => {
     
     // Validar que las contraseñas coincidan
     if (formData.password !== formData.confirmPassword) {
-      alert('Las contraseñas no coinciden');
+      setError('Las contraseñas no coinciden');
       return;
     }
     
-    // Aquí se haría la petición HTTP
+    // Preparar datos para el API
+    const userData = {
+      dni: formData.dni,
+      nombre: formData.nombre,
+      apellido: formData.apellido,
+      direccion: formData.direccion,
+      email: formData.email,
+      password: formData.password,
+      confirmPassword: formData.confirmPassword,
+      telefono: formData.telefono
+    };
+    
     setLoading(true);
+    setError(null);
     
     try {
-      // Simulación de petición
-      console.log('Datos del usuario a enviar:', formData);
+      // Llamar al servicio de registro
+      await authService.registerUser(userData);
       
-      // La petición HTTP iría aquí
-      // const response = await fetch('/api/registro/propietario', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(formData)
-      // });
-      
-      // if (!response.ok) throw new Error('Error en el registro');
-      
-      // const data = await response.json();
-      // console.log('Respuesta del servidor:', data);
-      
-      // Redirección o mensaje de éxito
-      alert('Registro exitoso! (simulado)');
-      
+      // Redirección a login con mensaje de éxito
+      navigate('/login', { state: { registered: true, message: 'Registro exitoso. Ahora puedes iniciar sesión.' } });
     } catch (error) {
       console.error('Error en el registro:', error);
-      alert('Error en el registro. Intente nuevamente.');
+      setError(error.info?.message || 'Error en el registro. Intente nuevamente.');
     } finally {
       setLoading(false);
     }
@@ -72,6 +75,12 @@ const UserRegisterForm = ({ onBack }) => {
         <FaGoogle className="text-red-500" />
         <span>Regístrate con Google</span>
       </button>
+      
+      {error && (
+        <div className="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-md">
+          {error}
+        </div>
+      )}
       
       <form onSubmit={handleSubmit}>
         <div className="space-y-4">

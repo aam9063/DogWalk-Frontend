@@ -1,7 +1,8 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { create } from 'zustand';
 import { useState, useRef, useEffect } from 'react';
-import { FaSearch, FaBars, FaTimes } from 'react-icons/fa';
+import { FaSearch, FaBars, FaTimes, FaUser } from 'react-icons/fa';
+import { useAuth } from '../Context/useAuth';
 
 // Store para el estado del carrito
 const useCartStore = create((set) => ({
@@ -24,12 +25,33 @@ const useMobileMenuStore = create((set) => ({
   close: () => set({ isOpen: false }),
 }));
 
+// Store para el menú de usuario
+const useUserMenuStore = create((set) => ({
+  isOpen: false,
+  toggle: () => set((state) => ({ isOpen: !state.isOpen })),
+  close: () => set({ isOpen: false }),
+}));
+
 const Navbar = () => {
+  const navigate = useNavigate();
   const { isOpen: isCartOpen, toggle: toggleCart } = useCartStore();
   const { isOpen: isSearchOpen, toggle: toggleSearch, close: closeSearch } = useSearchStore();
   const { isOpen: isMobileMenuOpen, toggle: toggleMobileMenu, close: closeMobileMenu } = useMobileMenuStore();
+  const { isOpen: isUserMenuOpen, toggle: toggleUserMenu, close: closeUserMenu } = useUserMenuStore();
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef(null);
+  const userMenuRef = useRef(null);
+  
+  // Usar el contexto de autenticación
+  const { user, isAuthenticated, loading, logout, verifyAuth } = useAuth();
+  
+  // Verificar estado de autenticación al cargar el componente
+  useEffect(() => {
+    // Comprobar si hay un token pero no hay usuario (por ejemplo, después de un refresh)
+    if (localStorage.getItem('token') && !user && !loading) {
+      verifyAuth();
+    }
+  }, []);
   
   // Enfocar el input cuando se abre la barra de búsqueda
   useEffect(() => {
@@ -56,6 +78,10 @@ const Navbar = () => {
     if (isSearchOpen && searchInputRef.current && !searchInputRef.current.contains(e.target)) {
       closeSearch();
     }
+    
+    if (isUserMenuOpen && userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+      closeUserMenu();
+    }
   };
   
   useEffect(() => {
@@ -63,7 +89,7 @@ const Navbar = () => {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isSearchOpen]);
+  }, [isSearchOpen, isUserMenuOpen]);
 
   // Cerrar menú móvil al cambiar el tamaño de la ventana
   useEffect(() => {
@@ -79,6 +105,24 @@ const Navbar = () => {
     };
   }, [closeMobileMenu]);
   
+  // Manejar el cierre de sesión
+  const handleLogout = () => {
+    logout();
+    closeUserMenu();
+    navigate('/');
+  };
+
+  // Ir al dashboard
+  const goToDashboard = () => {
+    navigate('/dashboard');
+    closeUserMenu();
+  };
+  
+  // Debug info - solo para desarrollo
+  useEffect(() => {
+    console.log('Estado de autenticación:', { isAuthenticated, user, token: localStorage.getItem('token') });
+  }, [isAuthenticated, user]);
+
   return (
     <nav className="w-full p-4 bg-white shadow-sm">
       <div className="container flex items-center justify-between mx-auto">
@@ -151,12 +195,52 @@ const Navbar = () => {
           </div>
 
           <div className="items-center hidden space-x-2 md:flex">
-            <Link to="/registro" className="px-4 py-2 text-white rounded-md bg-dog-green hover:bg-dog-light-green">
-              Registrarse
-            </Link>
-            <Link to="/iniciar-sesion" className="px-4 py-2 border rounded-md border-dog-green text-dog-green hover:bg-gray-50">
-              Iniciar Sesión
-            </Link>
+            {isAuthenticated && user ? (
+              <div className="relative" ref={userMenuRef}>
+                <button
+                  onClick={toggleUserMenu}
+                  className="flex items-center px-3 py-2 space-x-2 text-sm rounded-md bg-gray-50 hover:bg-gray-100"
+                >
+                  <FaUser className="text-dog-green" />
+                  <span className="font-medium text-gray-700">
+                    {user.nombre || user.email || 'Usuario'}
+                  </span>
+                </button>
+                
+                {isUserMenuOpen && (
+                  <div className="absolute right-0 z-20 w-48 py-2 mt-2 bg-white rounded-md shadow-lg">
+                    <button
+                      onClick={goToDashboard}
+                      className="block w-full px-4 py-2 text-sm text-left text-gray-700 hover:bg-gray-100"
+                    >
+                      Dashboard
+                    </button>
+                    <Link
+                      to="/perfil"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={closeUserMenu}
+                    >
+                      Mi Perfil
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="block w-full px-4 py-2 text-sm text-left text-red-600 hover:bg-gray-100"
+                    >
+                      Cerrar Sesión
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                <Link to="/register" className="px-4 py-2 text-white rounded-md bg-dog-green hover:bg-dog-light-green">
+                  Registrarse
+                </Link>
+                <Link to="/login" className="px-4 py-2 border rounded-md border-dog-green text-dog-green hover:bg-gray-50">
+                  Iniciar Sesión
+                </Link>
+              </>
+            )}
           </div>
           
           <button className="relative p-2" onClick={toggleCart}>
@@ -177,6 +261,23 @@ const Navbar = () => {
                   <FaTimes className="w-6 h-6" />
                 </button>
               </div>
+              
+              {/* Mostrar información del usuario si está autenticado */}
+              {isAuthenticated && user && (
+                <div className="py-3 mb-4 text-center border-b border-gray-200">
+                  <p className="font-medium text-gray-800">
+                    Hola, {user.nombre || 'Usuario'}
+                  </p>
+                  <p className="text-sm text-gray-500">{user.email}</p>
+                  <Link 
+                    to="/dashboard"
+                    className="inline-block px-3 py-1 mt-2 text-xs text-white rounded-md bg-dog-green hover:bg-dog-light-green"
+                    onClick={closeMobileMenu}
+                  >
+                    Ir al Dashboard
+                  </Link>
+                </div>
+              )}
               
               {/* Opciones de búsqueda en móvil */}
               <div className="mb-6">
@@ -200,6 +301,15 @@ const Navbar = () => {
               
               {/* Enlaces de navegación */}
               <div className="flex flex-col space-y-4">
+                {isAuthenticated && user && (
+                  <Link 
+                    to="/dashboard" 
+                    className="py-2 font-bold text-gray-700 border-b border-gray-100 hover:text-dog-green"
+                    onClick={closeMobileMenu}
+                  >
+                    Dashboard
+                  </Link>
+                )}
                 <Link 
                   to="/buscar-cuidadores" 
                   className="py-2 font-bold text-gray-700 border-b border-gray-100 hover:text-dog-green"
@@ -232,48 +342,65 @@ const Navbar = () => {
               
               {/* Botones de cuenta */}
               <div className="flex flex-col mt-6 space-y-3">
-                <Link 
-                  to="/registro" 
-                  className="w-full px-4 py-2 text-center text-white rounded-md bg-dog-green hover:bg-dog-light-green"
-                  onClick={closeMobileMenu}
-                >
-                  Registrarse
-                </Link>
-                <Link 
-                  to="/iniciar-sesion" 
-                  className="w-full px-4 py-2 text-center border rounded-md border-dog-green text-dog-green hover:bg-gray-50"
-                  onClick={closeMobileMenu}
-                >
-                  Iniciar Sesión
-                </Link>
+                {isAuthenticated && user ? (
+                  <button 
+                    onClick={() => {
+                      handleLogout();
+                      closeMobileMenu();
+                    }} 
+                    className="w-full px-4 py-2 text-center text-white bg-red-500 rounded-md hover:bg-red-600"
+                  >
+                    Cerrar Sesión
+                  </button>
+                ) : (
+                  <>
+                    <Link 
+                      to="/register" 
+                      className="w-full px-4 py-2 text-center text-white rounded-md bg-dog-green hover:bg-dog-light-green"
+                      onClick={closeMobileMenu}
+                    >
+                      Registrarse
+                    </Link>
+                    <Link 
+                      to="/login" 
+                      className="w-full px-4 py-2 text-center border rounded-md border-dog-green text-dog-green hover:bg-gray-50"
+                      onClick={closeMobileMenu}
+                    >
+                      Iniciar Sesión
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </div>
         </div>
       )}
       
-      {/* Overlay del carrito */}
+      {/* Modal del carrito */}
       {isCartOpen && (
-        <>
-          <div 
-            className="fixed inset-0 z-40 bg-black bg-opacity-50"
-            onClick={toggleCart}
-          />
-          <div className="fixed top-0 right-0 z-50 h-full p-6 transition-transform duration-300 transform bg-white shadow-xl w-80">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-adlam">Carrito</h2>
-              <button onClick={toggleCart} className="text-gray-500 hover:text-gray-700">
-                ✕
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-x-hidden overflow-y-auto">
+          <div className="fixed inset-0 transition-opacity bg-black bg-opacity-50" onClick={toggleCart}></div>
+          <div className="relative z-10 w-full max-w-md p-6 mx-auto my-8 overflow-hidden bg-white shadow-xl rounded-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium text-gray-900">Carrito de Compras</h3>
+              <button onClick={toggleCart} className="text-gray-400 hover:text-gray-500">
+                <FaTimes className="w-5 h-5" />
               </button>
             </div>
-            <div className="flex flex-col items-center justify-center h-4/5">
+            <div className="p-4 text-center border-2 border-gray-200 border-dashed rounded-lg">
               <p className="text-gray-500">Tu carrito está vacío</p>
+              <button 
+                onClick={toggleCart}
+                className="px-4 py-2 mt-4 text-white rounded-md bg-dog-green hover:bg-dog-light-green"
+              >
+                Continuar Comprando
+              </button>
             </div>
           </div>
-        </>
+        </div>
       )}
     </nav>
   );
 };
 
-export default Navbar; 
+export default Navbar;

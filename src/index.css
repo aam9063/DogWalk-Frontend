@@ -3,6 +3,10 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -11,4 +15,11 @@ body {
 
 .font-adlam {
   font-family: 'ADLaM Display', sans-serif;
+}
+
+/* Clases específicas para scroll suave en navegadores que no soportan scroll-behavior */
+.smooth-scroll {
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }
