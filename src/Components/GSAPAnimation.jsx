@@ -20,78 +20,84 @@ const GSAPAnimation = ({
   const childrenRef = useRef(null);
 
   useEffect(() => {
+    // Asegurarnos de que el componente está montado
+    if (!elementRef.current) return;
+    
     const element = elementRef.current;
     let animation;
+    let ctx = gsap.context(() => {
+      if (type === "fade") {
+        animation = gsap.fromTo(
+          element,
+          { opacity: 0, y: 30 },
+          { 
+            opacity: 1, 
+            y: 0, 
+            duration, 
+            delay,
+            ease: "power2.out",
+            paused: trigger ? true : false
+          }
+        );
+      } else if (type === "scale") {
+        animation = gsap.fromTo(
+          element,
+          { opacity: 0, scale: 0.7 },
+          { 
+            opacity: 1, 
+            scale: 1, 
+            duration, 
+            delay,
+            ease: "back.out(1.4)",
+            paused: trigger ? true : false 
+          }
+        );
+      } else if (type === "rotation") {
+        animation = gsap.fromTo(
+          element,
+          { opacity: 0, rotation: -5 },
+          { 
+            opacity: 1, 
+            rotation: 0, 
+            duration, 
+            delay,
+            ease: "power1.out",
+            paused: trigger ? true : false 
+          }
+        );
+      } else if (type === "stagger" && childrenRef.current) {
+        // Para elementos que tienen hijos que queremos animar con un efecto escalonado
+        const childElements = childrenRef.current.children;
+        if (childElements && childElements.length > 0) {
+          animation = gsap.fromTo(
+            childElements,
+            { opacity: 0, y: 20 },
+            { 
+              opacity: 1, 
+              y: 0, 
+              duration, 
+              stagger: staggerAmount,
+              delay,
+              ease: "power1.out",
+              paused: trigger ? true : false 
+            }
+          );
+        }
+      }
 
-    if (type === "fade") {
-      animation = gsap.fromTo(
-        element,
-        { opacity: 0, y: 30 },
-        { 
-          opacity: 1, 
-          y: 0, 
-          duration, 
-          delay,
-          ease: "power2.out"
-        }
-      );
-    } else if (type === "scale") {
-      animation = gsap.fromTo(
-        element,
-        { opacity: 0, scale: 0.7 },
-        { 
-          opacity: 1, 
-          scale: 1, 
-          duration, 
-          delay,
-          ease: "back.out(1.4)" 
-        }
-      );
-    } else if (type === "rotation") {
-      animation = gsap.fromTo(
-        element,
-        { opacity: 0, rotation: -5 },
-        { 
-          opacity: 1, 
-          rotation: 0, 
-          duration, 
-          delay,
-          ease: "power1.out" 
-        }
-      );
-    } else if (type === "stagger" && childrenRef.current) {
-      // Para elementos que tienen hijos que queremos animar con un efecto escalonado
-      const childElements = childrenRef.current.children;
-      animation = gsap.fromTo(
-        childElements,
-        { opacity: 0, y: 20 },
-        { 
-          opacity: 1, 
-          y: 0, 
-          duration, 
-          stagger: staggerAmount,
-          delay,
-          ease: "power1.out" 
-        }
-      );
-    }
-
-    // Si se proporciona un disparador y el elemento está visible
-    if (trigger && element) {
-      ScrollTrigger.create({
-        trigger: trigger === "self" ? element : trigger,
-        start: start,
-        onEnter: () => animation.play(),
-        once: true
-      });
-
-      // Revertir animación si no está en la vista inicial
-      animation.pause();
-    }
+      // Si se proporciona un disparador y el elemento está visible
+      if (trigger && element && animation) {
+        ScrollTrigger.create({
+          trigger: trigger === "self" ? element : trigger,
+          start: start,
+          onEnter: () => animation.play(),
+          once: true
+        });
+      }
+    }, elementRef); // Importante: delimitar el contexto a nuestro elemento
 
     return () => {
-      if (animation) animation.kill();
-      ScrollTrigger.getAll().forEach(st => st.kill());
+      ctx.revert(); // Limpia todas las animaciones creadas en este contexto
     };
   }, [type, trigger, start, duration, delay, staggerAmount]);
 

@@ -1,10 +1,17 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
+// eslint-disable-next-line no-unused-vars
+import { motion } from 'motion/react';
+import { gsap } from 'gsap';
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // Referencias para animaciones
+  const formRef = useRef(null);
+  const logoRef = useRef(null);
   
   // Usar selectores estándar de Zustand
   const login = useAuthStore(state => state.login);
@@ -19,6 +26,25 @@ const Login = () => {
   const [successMessage, setSuccessMessage] = useState(null);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [loginError, setLoginError] = useState(null);
+
+  // Animar los elementos al cargar la página
+  useEffect(() => {
+    if (logoRef.current && formRef.current) {
+      // Animación del logo
+      gsap.fromTo(
+        logoRef.current,
+        { opacity: 0, scale: 0.9 },
+        { opacity: 1, scale: 1, duration: 0.8, ease: "power2.out" }
+      );
+      
+      // Animación del formulario
+      gsap.fromTo(
+        formRef.current,
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.6, delay: 0.3, ease: "power1.out" }
+      );
+    }
+  }, []);
 
   // Verificar si hay mensajes de estado (por ejemplo, después de registro exitoso)
   useEffect(() => {
@@ -91,10 +117,15 @@ const Login = () => {
   if (isRedirecting) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-white">
-        <div className="text-center">
+        <motion.div 
+          className="text-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
           <div className="w-16 h-16 mx-auto mb-4 border-4 rounded-full border-t-dog-green border-r-dog-green border-b-transparent border-l-transparent animate-spin"></div>
           <p className="text-xl text-gray-600">Redirigiendo al dashboard...</p>
-        </div>
+        </motion.div>
       </div>
     );
   }
@@ -104,43 +135,60 @@ const Login = () => {
       <div className="flex flex-col min-h-screen md:flex-row">
         {/* Columna izquierda con logo */}
         <div className="flex items-center justify-center w-full p-8 md:w-2/5 bg-dog-green">
-          <div className="max-w-sm">
-            <Link to="/">
-              <img 
-                src="/imgs/DogWalkLogo.jpg" 
-                alt="Dog Walk Logo" 
-                className="w-full mx-auto rounded-lg cursor-pointer"
-              />
-            </Link>
+          <div className="max-w-sm" ref={logoRef}>
+            <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.3 }}>
+              <Link to="/">
+                <img 
+                  src="/imgs/DogWalkLogo.jpg" 
+                  alt="Dog Walk Logo" 
+                  className="w-full mx-auto rounded-lg cursor-pointer"
+                />
+              </Link>
+            </motion.div>
           </div>
         </div>
         
         {/* Columna derecha con formulario */}
         <div className="flex flex-col justify-center w-full p-8 md:w-3/5">
-          <h1 className="mb-8 text-3xl text-center font-adlam">
+          <motion.h1 
+            className="mb-8 text-3xl text-center font-adlam"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+          >
             Iniciar Sesión
-          </h1>
+          </motion.h1>
           
           {successMessage && (
-            <div className="p-3 mb-4 text-sm text-green-700 bg-green-100 rounded-md">
+            <motion.div 
+              className="p-3 mb-4 text-sm text-green-700 bg-green-100 rounded-md"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+            >
               {successMessage}
-            </div>
+            </motion.div>
           )}
           
           {loginError && (
-            <div className="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-md">
+            <motion.div 
+              className="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-md"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4 }}
+            >
               {loginError}
-            </div>
+            </motion.div>
           )}
           
-          <div className="w-full max-w-md mx-auto">
+          <div className="w-full max-w-md mx-auto" ref={formRef}>
             <form onSubmit={handleSubmit}>
               <div className="space-y-4">
                 <div>
                   <label htmlFor="email" className="block mb-1 text-sm font-medium text-gray-700">
                     Email:
                   </label>
-                  <input
+                  <motion.input
                     type="email"
                     id="email"
                     name="email"
@@ -148,6 +196,8 @@ const Login = () => {
                     onChange={handleChange}
                     required
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-dog-green"
+                    whileFocus={{ scale: 1.01, borderColor: "#36A269" }}
+                    transition={{ duration: 0.2 }}
                   />
                 </div>
                 
@@ -155,7 +205,7 @@ const Login = () => {
                   <label htmlFor="password" className="block mb-1 text-sm font-medium text-gray-700">
                     Contraseña:
                   </label>
-                  <input
+                  <motion.input
                     type="password"
                     id="password"
                     name="password"
@@ -163,29 +213,39 @@ const Login = () => {
                     onChange={handleChange}
                     required
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-dog-green"
+                    whileFocus={{ scale: 1.01, borderColor: "#36A269" }}
+                    transition={{ duration: 0.2 }}
                   />
                 </div>
               </div>
               
-              <button
+              <motion.button
                 type="submit"
                 disabled={loading || isRedirecting}
                 className={`w-full mt-6 py-3 px-4 bg-dog-green text-white rounded-md hover:bg-dog-light-green transition duration-300 ${
                   (loading || isRedirecting) ? 'opacity-70 cursor-not-allowed' : ''
                 }`}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.2 }}
               >
                 {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
-              </button>
+              </motion.button>
             </form>
             
-            <div className="mt-4 text-center">
+            <motion.div 
+              className="mt-4 text-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+            >
               <p className="text-gray-600">
                 ¿No tienes una cuenta?{' '}
                 <Link to="/register" className="text-dog-green hover:underline">
                   Regístrate
                 </Link>
               </p>
-            </div>
+            </motion.div>
           </div>
         </div>
       </div>

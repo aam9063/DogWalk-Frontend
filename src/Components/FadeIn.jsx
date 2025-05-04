@@ -1,5 +1,5 @@
 // eslint-disable-next-line no-unused-vars
-import { motion } from "motion/react";
+import { motion } from "framer-motion";
 
 // Componente de animación reutilizable para efectos de aparición
 const FadeIn = ({ 

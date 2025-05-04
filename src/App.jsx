@@ -8,6 +8,9 @@ import HowItWorks from './Pages/HowItWorks'
 import Services from './Pages/Services'
 import Login from './Pages/Login'
 import Dashboard from './Pages/Dashboard'
+import ScrollToTopButton from './Components/ScrollToTopButton'
+import ChatAssistant from './Components/ChatAssistant'
+import ScrollProgress from './Components/ScrollProgress'
 import useAuthStore from './store/authStore'
 import useInitAuth from './hooks/useInitAuth'
 import './App.css'
@@ -44,6 +47,9 @@ function App() {
 
   return (
     <BrowserRouter>
+      {/* Barra de progreso de scroll */}
+      <ScrollProgress />
+      
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/register" element={<Register />} />
@@ -62,6 +68,12 @@ function App() {
         <Route path="/como-funciona" element={<HowItWorks />} />
         <Route path="/servicios" element={<Services />} />
       </Routes>
+      
+      {/* Botón para volver arriba */}
+      <ScrollToTopButton />
+      
+      {/* Asistente virtual */}
+      <ChatAssistant />
     </BrowserRouter>
   )
 }

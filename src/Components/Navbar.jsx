@@ -3,6 +3,9 @@ import { create } from 'zustand';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { FaSearch, FaBars, FaTimes, FaUser } from 'react-icons/fa';
 import useAuthStore from '../store/authStore';
+// eslint-disable-next-line no-unused-vars
+import { motion, AnimatePresence } from 'motion/react';
+import { gsap } from 'gsap';
 
 // Store para el estado del carrito
 const useCartStore = create((set) => ({
@@ -127,75 +130,151 @@ const Navbar = () => {
     console.log('Estado de autenticación:', { isAuthenticated, user, token: localStorage.getItem('token') });
   }, [isAuthenticated, user]);
 
+  // Referencia para el logo y navegación
+  const logoRef = useRef(null);
+  const navItemsRef = useRef(null);
+  
+  // Animación inicial con GSAP
+  useEffect(() => {
+    // Animación del logo
+    gsap.fromTo(
+      logoRef.current,
+      { opacity: 0, x: -20 },
+      { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }
+    );
+    
+    // Animación de elementos de navegación
+    if (navItemsRef.current) {
+      const navLinks = navItemsRef.current.children;
+      gsap.fromTo(
+        navLinks,
+        { opacity: 0, y: -10 },
+        { 
+          opacity: 1, 
+          y: 0, 
+          stagger: 0.1, 
+          duration: 0.3, 
+          ease: "power1.out",
+          delay: 0.2
+        }
+      );
+    }
+  }, []);
+
   return (
     <nav className="w-full p-4 bg-white shadow-sm">
       <div className="container flex items-center justify-between mx-auto">
         {/* Logo */}
-        <div className="flex items-center">
-          <Link to="/" className="flex items-center gap-2">
-            <img src="/icons/huella (1).svg" alt="Dog Walk Logo" className="w-8 h-8 text-dog-green" />
-            <span className="text-2xl font-adlam text-dog-dark">Dog Walk</span>
-          </Link>
+        <div className="flex items-center" ref={logoRef}>
+          <motion.div whileHover={{ scale: 1.05 }} transition={{ duration: 0.2 }}>
+            <Link to="/" className="flex items-center gap-2">
+              <motion.img 
+                src="/icons/huella (1).svg" 
+                alt="Dog Walk Logo" 
+                className="w-8 h-8 text-dog-green"
+                whileHover={{ rotate: 15 }}
+                transition={{ duration: 0.3 }}
+              />
+              <span className="text-2xl font-adlam text-dog-dark">Dog Walk</span>
+            </Link>
+          </motion.div>
         </div>
         
         {/* Menú de navegación (escritorio) */}
-        <div className="hidden space-x-6 md:flex">
-          <Link to="/buscar-cuidadores" className="font-bold text-gray-700 hover:text-dog-green">Buscar Cuidadores</Link>
-          <Link to="/como-funciona" className="font-bold text-gray-700 hover:text-dog-green">Cómo funciona</Link>
-          <Link to="/servicios" className="font-bold text-gray-700 hover:text-dog-green">Servicios</Link>
-          <Link to="/tienda" className="font-bold text-gray-700 hover:text-dog-green">Tienda</Link>
+        <div className="hidden space-x-6 md:flex" ref={navItemsRef}>
+          <motion.div whileHover={{ y: -2 }} transition={{ type: "spring", stiffness: 300 }}>
+            <Link to="/buscar-cuidadores" className="font-bold text-gray-700 hover:text-dog-green">Buscar Cuidadores</Link>
+          </motion.div>
+          <motion.div whileHover={{ y: -2 }} transition={{ type: "spring", stiffness: 300 }}>
+            <Link to="/como-funciona" className="font-bold text-gray-700 hover:text-dog-green">Cómo funciona</Link>
+          </motion.div>
+          <motion.div whileHover={{ y: -2 }} transition={{ type: "spring", stiffness: 300 }}>
+            <Link to="/servicios" className="font-bold text-gray-700 hover:text-dog-green">Servicios</Link>
+          </motion.div>
+          <motion.div whileHover={{ y: -2 }} transition={{ type: "spring", stiffness: 300 }}>
+            <Link to="/tienda" className="font-bold text-gray-700 hover:text-dog-green">Tienda</Link>
+          </motion.div>
         </div>
         
         {/* Iconos */}
         <div className="flex items-center space-x-2 md:space-x-4">
           {/* Botón de menú hamburguesa (solo móvil) */}
-          <button 
+          <motion.button 
             className="p-2 md:hidden"
             onClick={toggleMobileMenu}
             aria-label="Menú"
+            whileTap={{ scale: 0.9 }}
           >
-            {isMobileMenuOpen ? (
-              <FaTimes className="w-6 h-6 text-dog-dark" />
-            ) : (
-              <FaBars className="w-6 h-6 text-dog-dark" />
-            )}
-          </button>
+            <AnimatePresence mode="wait">
+              {isMobileMenuOpen ? (
+                <motion.div
+                  key="close"
+                  initial={{ rotate: -90, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  exit={{ rotate: 90, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <FaTimes className="w-6 h-6 text-dog-dark" />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="open"
+                  initial={{ rotate: 90, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  exit={{ rotate: -90, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <FaBars className="w-6 h-6 text-dog-dark" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.button>
 
           <div className="relative hidden md:block">
-            <button 
+            <motion.button 
               className="p-2"
               onClick={toggleSearch}
               aria-label="Buscar"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
             >
               <img src="/icons/search.svg" alt="Buscar" className="w-5 h-5" />
-            </button>
+            </motion.button>
             
             {/* Barra de búsqueda */}
-            {isSearchOpen && (
-              <div 
-                className="absolute right-0 z-20 mt-2 overflow-hidden transition-all duration-300 origin-top-right transform bg-white rounded-md shadow-lg w-72"
-                style={{ top: '100%' }}
-                ref={searchInputRef}
-              >
-                <form onSubmit={handleSearch} className="flex items-center border-b border-gray-200">
-                  <input
-                    type="text"
-                    className="w-full px-4 py-2 focus:outline-none"
-                    placeholder="Buscar..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    ref={searchInputRef}
-                  />
-                  <button 
-                    type="submit" 
-                    className="p-2 text-dog-green hover:text-dog-dark"
-                    aria-label="Realizar búsqueda"
-                  >
-                    <FaSearch />
-                  </button>
-                </form>
-              </div>
-            )}
+            <AnimatePresence>
+              {isSearchOpen && (
+                <motion.div 
+                  className="absolute right-0 z-20 mt-2 overflow-hidden bg-white rounded-md shadow-lg w-72"
+                  style={{ top: '100%' }}
+                  ref={searchInputRef}
+                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <form onSubmit={handleSearch} className="flex items-center border-b border-gray-200">
+                    <input
+                      type="text"
+                      className="w-full px-4 py-2 focus:outline-none"
+                      placeholder="Buscar..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      ref={searchInputRef}
+                    />
+                    <motion.button 
+                      type="submit" 
+                      className="p-2 text-dog-green hover:text-dog-dark"
+                      aria-label="Realizar búsqueda"
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                    >
+                      <FaSearch />
+                    </motion.button>
+                  </form>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           <div className="items-center hidden space-x-2 md:flex">
