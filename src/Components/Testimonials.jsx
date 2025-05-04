@@ -104,7 +104,7 @@ const Testimonials = () => {
       ref={sectionRef} 
       className="relative py-16 text-white bg-dog-dark"
       style={{
-        backgroundImage: 'url(/public/imgs/ai-generated-9131382_1280.jpg)',
+        backgroundImage: 'url(/imgs/ai-generated-9131382_1280.jpg)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundBlendMode: 'overlay',

@@ -44,7 +44,7 @@ const ShopBanner = () => {
               transition={{ duration: 0.8, ease: "easeOut" }}
             >
               <img 
-                src="/public/imgs/malinois-and-border-collie-788032_1280.jpg" 
+                src="/imgs/malinois-and-border-collie-788032_1280.jpg" 
                 alt="Perros jugando" 
                 className="w-full h-auto rounded-lg shadow-lg"
               />

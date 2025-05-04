@@ -89,7 +89,7 @@ const Footer = () => {
                   <SmoothScrollLink to="/cobertura-veterinaria" className="text-gray-300 hover:text-white">Cobertura Veterinaria</SmoothScrollLink>
                 </li>
                 <li>
-                  <SmoothScrollLink to="/hazte-cuidador" className="text-gray-300 hover:text-white">Hazte Cuidador</SmoothScrollLink>
+                  <SmoothScrollLink to="/register" className="text-gray-300 hover:text-white">Hazte Cuidador</SmoothScrollLink>
                 </li>
                 <li>
                   <SmoothScrollLink to="/tienda" className="text-gray-300 hover:text-white">Tienda</SmoothScrollLink>

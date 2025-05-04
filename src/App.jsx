@@ -6,8 +6,11 @@ import Register from './Pages/Register'
 import PrivacyPolicy from './Pages/PrivacyPolicy'
 import HowItWorks from './Pages/HowItWorks'
 import Services from './Pages/Services'
+import Contact from './Pages/Contact'
+import DSADisclosure from './Pages/DSADisclosure'
 import Login from './Pages/Login'
 import Dashboard from './Pages/Dashboard'
+import SearchCaregivers from './Pages/SearchCaregivers'
 import ScrollToTopButton from './Components/ScrollToTopButton'
 import ChatAssistant from './Components/ChatAssistant'
 import ScrollProgress from './Components/ScrollProgress'
@@ -67,6 +70,10 @@ function App() {
         <Route path="/politica-de-privacidad" element={<PrivacyPolicy />} />
         <Route path="/como-funciona" element={<HowItWorks />} />
         <Route path="/servicios" element={<Services />} />
+        <Route path="/contacto" element={<Contact />} />
+        <Route path="/dsadisclosure" element={<DSADisclosure />} />
+        <Route path="/ley-de-servicios-digitales" element={<DSADisclosure />} />
+        <Route path="/buscar-cuidadores" element={<SearchCaregivers />} />
       </Routes>
       
       {/* Botón para volver arriba */}
