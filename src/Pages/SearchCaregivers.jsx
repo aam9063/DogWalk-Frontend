@@ -11,7 +11,11 @@ import { motion } from "framer-motion";
 import FadeIn from "../Components/FadeIn";
 
 // Establecer token de acceso de Mapbox
-mapboxgl.accessToken = 'pk.eyJ1IjoiYWxiZXJ0LWRldjkwIiwiYSI6ImNtYThmamNxbTFjODkybnM4YjcwNnA5Ym4ifQ.gAg4FJDBKCLrtC7Q98yYfg';
+mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
+
+if (!import.meta.env.VITE_MAPBOX_TOKEN) {
+  console.error('VITE_MAPBOX_TOKEN no está definido en el archivo .env');
+}
 
 // Prevenir el error "Map container is already a part of a Map instance"
 const previousMapInstances = {};
