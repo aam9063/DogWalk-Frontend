@@ -4,6 +4,7 @@ import useAuthStore from '../store/authStore';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'motion/react';
 import { gsap } from 'gsap';
+import { FaGoogle } from 'react-icons/fa';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -150,6 +151,15 @@ const Login = () => {
         
         {/* Columna derecha con formulario */}
         <div className="flex flex-col justify-center w-full p-8 md:w-3/5">
+          <motion.p
+            className="mb-2 text-xl text-center text-dog-green font-adlam"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            Bienvenido de nuevo a Dog Walk
+          </motion.p>
+          
           <motion.h1 
             className="mb-8 text-3xl text-center font-adlam"
             initial={{ opacity: 0, y: -20 }}
@@ -231,6 +241,18 @@ const Login = () => {
               >
                 {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
               </motion.button>
+
+              <div className="my-4">
+                <p className="text-center">o</p>
+
+                <button 
+                  type="button" 
+                  className="flex items-center justify-center w-full gap-2 px-4 py-2 mt-4 mb-6 transition bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  <FaGoogle className="text-red-500" />
+                  <span>Iniciar sesión con Google</span>
+                </button>
+              </div>
             </form>
             
             <motion.div 

@@ -1,0 +1,276 @@
+import React, { useState, useEffect } from 'react';
+import Navbar from '../Components/Navbar';
+import Footer from '../Components/Footer';
+import FilterTree from '../Components/Shop/FilterTree';
+import ProductCard from '../Components/Shop/ProductCard';
+import articleService from '../Services/articleService';
+import { FaSearch, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+
+const Shop = () => {
+  // Estados para los datos y la paginación
+  const [products, setProducts] = useState([]);
+  const [categorias, setCategorias] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
+  
+  // Estados para los filtros
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(9); // Número fijo de elementos por página
+  
+  // Cargar categorías
+  useEffect(() => {
+    setCategorias(articleService.getCategorias());
+  }, []);
+  
+  // Cargar productos según filtros y paginación
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        // Construir las opciones para la petición
+        const options = {
+          pageNumber: currentPage,
+          pageSize: itemsPerPage,
+          searchTerm: searchTerm,
+          ascending: true
+        };
+        
+        // Añadir las categorías seleccionadas si hay alguna
+        if (selectedCategories.length > 0) {
+          // Convertimos el array de IDs a un string separado por comas para la API
+          options.categoria = selectedCategories.join(',');
+        }
+        
+        const response = await articleService.getAll(options);
+        
+        setProducts(response.items || []);
+        setTotalPages(response.totalPaginas || 0);
+        setTotalItems(response.totalItems || 0);
+      } catch (err) {
+        console.error("Error al cargar productos:", err);
+        setError("No se pudieron cargar los productos. Por favor, intenta nuevamente.");
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchProducts();
+  }, [currentPage, itemsPerPage, searchTerm, selectedCategories]);
+  
+  // Manejar cambio en filtro de categorías
+  const handleCategoryChange = (categoryId) => {
+    setSelectedCategories(prev => {
+      const categoryIndex = prev.indexOf(categoryId);
+      
+      // Si ya está seleccionada, la quitamos
+      if (categoryIndex !== -1) {
+        return prev.filter(id => id !== categoryId);
+      }
+      
+      // Si no está seleccionada, la añadimos a las existentes
+      return [...prev, categoryId];
+    });
+    
+    // Resetear a la primera página cuando cambia el filtro
+    setCurrentPage(1);
+  };
+  
+  // Manejar cambio en búsqueda por texto
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
+  
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    // La búsqueda se ejecuta en el useEffect cuando cambia searchTerm
+    setCurrentPage(1); // Resetear a la primera página al buscar
+  };
+  
+  // Funciones de paginación
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(prev => prev + 1);
+    }
+  };
+  
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(prev => prev - 1);
+    }
+  };
+  
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      
+      {/* Banner de la tienda */}
+      <div className="relative">
+        <div className="h-[400px] w-full">
+          <img 
+            src="/imgs/corgi-4415649_1280.jpg" 
+            alt="Tienda Dog Walk" 
+            className="object-cover w-full h-full opacity-60"
+          />
+        </div>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <h1 className="text-4xl font-bold text-white shadow-text">Nuestros Productos</h1>
+        </div>
+      </div>
+      
+      <div className="container px-4 py-8 mx-auto">
+        <div className="flex flex-col gap-8 md:flex-row">
+          {/* Columna izquierda - Filtros */}
+          <div className="w-full md:w-1/4">
+            {/* Árbol de filtros */}
+            <FilterTree 
+              categorias={categorias} 
+              selectedCategories={selectedCategories}
+              onCategoryChange={handleCategoryChange}
+            />
+            
+            {/* Búsqueda */}
+            <div className="p-6 mt-6 bg-white rounded-lg shadow-md">
+              <h2 className="mb-4 text-xl font-semibold">Buscar</h2>
+              <form onSubmit={handleSearchSubmit} className="flex">
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  placeholder="Buscar productos..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-1 focus:ring-dog-green"
+                />
+                <button 
+                  type="submit"
+                  className="px-4 py-2 text-white bg-dog-green hover:bg-dog-light-green rounded-r-md"
+                >
+                  <FaSearch />
+                </button>
+              </form>
+            </div>
+          </div>
+          
+          {/* Columna derecha - Productos */}
+          <div className="w-full md:w-3/4">
+            {/* Información de resultados */}
+            <div className="flex flex-col items-center justify-between mb-6 md:flex-row">
+              <div>
+                <h2 className="text-2xl font-semibold">Productos</h2>
+                <p className="text-gray-600">
+                  {totalItems === 0 
+                    ? 'No se encontraron productos' 
+                    : `Mostrando ${products.length} de ${totalItems} productos`
+                  }
+                </p>
+              </div>
+              
+              {/* Filtros activos */}
+              {selectedCategories.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-4 md:mt-0">
+                  {selectedCategories.map(catId => {
+                    const categoria = categorias.find(cat => cat.id === catId);
+                    return categoria ? (
+                      <div 
+                        key={categoria.id}
+                        className="flex items-center px-3 py-1 text-sm rounded-full bg-dog-light-green text-dog-green"
+                      >
+                        {categoria.nombre}
+                        <button 
+                          onClick={() => handleCategoryChange(categoria.id)}
+                          className="ml-2 text-dog-green hover:text-dog-dark-green"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ) : null;
+                  })}
+                </div>
+              )}
+            </div>
+            
+            {/* Spinner de carga */}
+            {loading && (
+              <div className="flex items-center justify-center h-64">
+                <div className="w-12 h-12 border-4 rounded-full border-t-dog-green border-r-dog-green border-b-transparent border-l-transparent animate-spin"></div>
+              </div>
+            )}
+            
+            {/* Mensaje de error */}
+            {error && !loading && (
+              <div className="p-4 mb-6 text-red-700 bg-red-100 rounded-md">
+                {error}
+              </div>
+            )}
+            
+            {/* Lista de productos */}
+            {!loading && !error && products.length === 0 && (
+              <div className="p-4 text-yellow-800 bg-yellow-100 rounded-md">
+                No se encontraron productos con los filtros seleccionados.
+              </div>
+            )}
+            
+            {!loading && !error && products.length > 0 && (
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {products.map(product => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            )}
+            
+            {/* Paginación */}
+            {totalPages > 1 && (
+              <div className="flex justify-center mt-8">
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={goToPreviousPage}
+                    disabled={currentPage === 1}
+                    className={`flex items-center justify-center w-10 h-10 rounded-full ${
+                      currentPage === 1
+                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                        : 'bg-dog-green text-white hover:bg-dog-light-green'
+                    }`}
+                  >
+                    <FaChevronLeft size={14} />
+                  </button>
+                  
+                  <div className="text-gray-700">
+                    Página {currentPage} de {totalPages}
+                  </div>
+                  
+                  <button
+                    onClick={goToNextPage}
+                    disabled={currentPage === totalPages}
+                    className={`flex items-center justify-center w-10 h-10 rounded-full ${
+                      currentPage === totalPages
+                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                        : 'bg-dog-green text-white hover:bg-dog-light-green'
+                    }`}
+                  >
+                    <FaChevronRight size={14} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      
+      <Footer />
+      
+      {/* Estilos adicionales */}
+      <style jsx="true">{`
+        .shadow-text {
+          text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+      `}</style>
+    </div>
+  );
+};
+
+export default Shop; 

@@ -77,7 +77,6 @@ const SearchCaregivers = () => {
       // Añadir nuevos marcadores
       cuidadoresData.forEach(cuidador => {
         if (cuidador.latitud && cuidador.longitud) {
-          // Crear elemento HTML personalizado para el marcador
           const el = document.createElement('div');
           el.className = 'custom-marker';
           el.style.width = '30px';
@@ -628,7 +627,7 @@ const SearchCaregivers = () => {
               </div>
 
               {/* Estilos para el scrollbar personalizado */}
-              <style jsx>{`
+              <style jsx="true">{`
                 .custom-scrollbar::-webkit-scrollbar {
                   width: 6px;
                 }

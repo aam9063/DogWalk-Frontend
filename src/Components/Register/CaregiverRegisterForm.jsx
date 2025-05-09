@@ -173,12 +173,7 @@ const CaregiverRegisterForm = ({ onBack }) => {
       >
         <FaArrowLeft className="mr-1" /> Volver
       </button>
-      
-      <button className="flex items-center justify-center w-full gap-2 px-4 py-2 mb-6 transition bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-        <FaGoogle className="text-red-500" />
-        <span>Regístrate con Google</span>
-      </button>
-      
+            
       {serviceError && (
         <div className="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-md">
           {serviceError}
@@ -411,6 +406,13 @@ const CaregiverRegisterForm = ({ onBack }) => {
           }`}
         >
           {loading ? 'Registrando...' : 'Regístrate'}
+        </button>
+
+        <p className="text-center">o</p>
+
+        <button className="flex items-center justify-center w-full gap-2 px-4 py-2 mb-6 transition bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+          <FaGoogle className="text-red-500" />
+          <span>Regístrate con Google</span>
         </button>
       </form>
     </div>

@@ -11,6 +11,7 @@ import DSADisclosure from './Pages/DSADisclosure'
 import Login from './Pages/Login'
 import Dashboard from './Pages/Dashboard'
 import SearchCaregivers from './Pages/SearchCaregivers'
+import Shop from './Pages/Shop'
 import ScrollToTopButton from './Components/ScrollToTopButton'
 import ChatAssistant from './Components/ChatAssistant'
 import ScrollProgress from './Components/ScrollProgress'
@@ -74,6 +75,7 @@ function App() {
         <Route path="/dsadisclosure" element={<DSADisclosure />} />
         <Route path="/ley-de-servicios-digitales" element={<DSADisclosure />} />
         <Route path="/buscar-cuidadores" element={<SearchCaregivers />} />
+        <Route path="/tienda" element={<Shop />} />
       </Routes>
       
       {/* Botón para volver arriba */}

@@ -1,9 +1,17 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 // eslint-disable-next-line no-unused-vars
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 
 const Hero = () => {
   const [searchType, setSearchType] = useState('paseo');
+  const navigate = useNavigate();
+
+  // Función para manejar la redirección directa a la búsqueda de cuidadores
+  const handleSearch = () => {
+    // Redireccionar directamente a la página de cuidadores
+    navigate('/buscar-cuidadores');
+  };
 
   return (
     <section className="relative w-full h-[500px]">
@@ -112,6 +120,7 @@ const Hero = () => {
               transition={{ duration: 0.5, delay: 0.5 }}
               whileHover={{ scale: 1.02, backgroundColor: "#50a370" }}
               whileTap={{ scale: 0.98 }}
+              onClick={handleSearch}
               className="w-full px-4 py-3 text-white transition-colors rounded-md bg-dog-green"
             >
               Buscar

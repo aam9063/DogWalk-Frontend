@@ -18,7 +18,6 @@ const caregiverService = {
     if (Array.isArray(response)) {
       return response;
     } else if (response && typeof response === 'object') {
-      // Buscar propiedades comunes que podrían contener los datos
       for (const prop of ['items', 'data', 'results', 'cuidadores', 'paseadores', 'content']) {
         if (response[prop] && Array.isArray(response[prop])) {
           return response[prop];
