@@ -241,12 +241,10 @@ const ProductDetail = () => {
             {/* Columna derecha - Información del producto */}
             <div className="space-y-4">
               <div className="flex items-center">
-                <span className="px-3 py-1 text-sm rounded-full bg-dog-light-green text-dog-green">
+                <span className="px-3 py-1 text-sm bg-white border rounded-full border-dog-green text-dog-green">
                   {product.categoria}
                 </span>
-                <div className="ml-auto text-sm text-gray-500">
-                  ID: {product.id.substring(0, 8)}...
-                </div>
+               
               </div>
               
               <h1 className="text-2xl font-bold md:text-3xl">{product.nombre}</h1>
@@ -266,10 +264,6 @@ const ProductDetail = () => {
                       ? `${product.stock} unidades disponibles` 
                       : "No disponible"
                     }
-                  </div>
-                  
-                  <div className="text-sm text-gray-500">
-                    Añadido el {formatDate(product.fechaCreacion)}
                   </div>
                 </div>
               </div>

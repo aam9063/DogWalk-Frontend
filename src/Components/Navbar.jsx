@@ -1,18 +1,15 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { create } from 'zustand';
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { FaSearch, FaBars, FaTimes, FaUser } from 'react-icons/fa';
+import { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
+import { FaSearch, FaBars, FaTimes, FaUser, FaShoppingCart } from 'react-icons/fa';
 import useAuthStore from '../store/authStore';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'motion/react';
 import { gsap } from 'gsap';
-
-// Store para el estado del carrito
-const useCartStore = create((set) => ({
-  isOpen: false,
-  toggle: () => set((state) => ({ isOpen: !state.isOpen })),
-  close: () => set({ isOpen: false }),
-}));
+import CartDrawer from './Cart/CartDrawer';
+import cartService from '../Services/cartService';
+import AuthPopup from './Common/AuthPopup';
+import useCartStore from '../store/cartStore';
 
 // Store para el estado de la barra de búsqueda
 const useSearchStore = create((set) => ({
@@ -35,7 +32,7 @@ const useUserMenuStore = create((set) => ({
   close: () => set({ isOpen: false }),
 }));
 
-const Navbar = () => {
+const Navbar = forwardRef((props, ref) => {
   const navigate = useNavigate();
   const { isOpen: isCartOpen, toggle: toggleCart } = useCartStore();
   const { isOpen: isSearchOpen, toggle: toggleSearch, close: closeSearch } = useSearchStore();
@@ -45,12 +42,8 @@ const Navbar = () => {
   const searchInputRef = useRef(null);
   const userMenuRef = useRef(null);
   
-  // Usar el store de autenticación con selectores
-  const user = useAuthStore(state => state.user);
-  const isAuthenticated = useAuthStore(state => state.isAuthenticated);
-  const loading = useAuthStore(state => state.loading);
-  const logout = useAuthStore(state => state.logout);
-  const verifyAuth = useAuthStore(state => state.verifyAuth);
+  // Usar el store de autenticación
+  const { user, isAuthenticated, loading, logout, verifyAuth } = useAuthStore();
   
   // Verificar estado de autenticación al cargar el componente
   useEffect(() => {
@@ -160,6 +153,36 @@ const Navbar = () => {
       );
     }
   }, []);
+
+  const [isAuthPopupOpen, setIsAuthPopupOpen] = useState(false);
+  const [cart, setCart] = useState(null);
+
+  const fetchCart = async () => {
+    if (!isAuthenticated) return;
+    
+    try {
+      const cartData = await cartService.getCart();
+      setCart(cartData);
+    } catch (error) {
+      console.error('Error al obtener el carrito:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchCart();
+  }, [isAuthenticated]);
+
+  const handleCartClick = () => {
+    if (!isAuthenticated) {
+      setIsAuthPopupOpen(true);
+      return;
+    }
+    toggleCart();
+  };
+
+  useImperativeHandle(ref, () => ({
+    fetchCart
+  }));
 
   return (
     <nav className="w-full p-4 bg-white shadow-sm">
@@ -326,8 +349,16 @@ const Navbar = () => {
             )}
           </div>
           
-          <button className="relative p-2" onClick={toggleCart}>
-            <img src="/icons/cart.svg" alt="Carrito" className="w-5 h-5" />
+          <button 
+            onClick={handleCartClick}
+            className="relative p-2 text-gray-700 hover:text-dog-green"
+          >
+            <FaShoppingCart size={20} />
+            {isAuthenticated && cart?.cantidadItems > 0 && (
+              <span className="absolute top-0 right-0 flex items-center justify-center w-5 h-5 text-xs text-white transform translate-x-1/2 -translate-y-1/2 bg-red-500 rounded-full">
+                {cart.cantidadItems}
+              </span>
+            )}
           </button>
         </div>
       </div>
@@ -459,31 +490,22 @@ const Navbar = () => {
         </div>
       )}
       
-      {/* Modal del carrito */}
-      {isCartOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-x-hidden overflow-y-auto">
-          <div className="fixed inset-0 transition-opacity bg-black bg-opacity-50" onClick={toggleCart}></div>
-          <div className="relative z-10 w-full max-w-md p-6 mx-auto my-8 overflow-hidden bg-white shadow-xl rounded-2xl">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-gray-900">Carrito de Compras</h3>
-              <button onClick={toggleCart} className="text-gray-400 hover:text-gray-500">
-                <FaTimes className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-4 text-center border-2 border-gray-200 border-dashed rounded-lg">
-              <p className="text-gray-500">Tu carrito está vacío</p>
-              <button 
-                onClick={toggleCart}
-                className="px-4 py-2 mt-4 text-white rounded-md bg-dog-green hover:bg-dog-light-green"
-              >
-                Continuar Comprando
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Cart Drawer */}
+      <CartDrawer
+        isOpen={isCartOpen}
+        onClose={() => toggleCart()}
+        cart={cart}
+        onCartUpdate={fetchCart}
+      />
+
+      {/* Auth Popup */}
+      <AuthPopup
+        isOpen={isAuthPopupOpen}
+        onClose={() => setIsAuthPopupOpen(false)}
+        message="Por favor, inicia sesión para ver tu carrito de compras"
+      />
     </nav>
   );
-};
+});
 
 export default Navbar;

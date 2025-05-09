@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Navbar from '../Components/Navbar';
 import Footer from '../Components/Footer';
 import FilterTree from '../Components/Shop/FilterTree';
 import ProductCard from '../Components/Shop/ProductCard';
 import articleService from '../Services/articleService';
-import { FaSearch, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { FaSearch, FaChevronLeft, FaChevronRight, FaAngleDoubleLeft, FaAngleDoubleRight } from 'react-icons/fa';
+import ReactPaginate from 'react-paginate';
+import useCartStore from '../store/cartStore';
 
 const Shop = () => {
   // Estados para los datos y la paginación
@@ -20,6 +22,10 @@ const Shop = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(9); // Número fijo de elementos por página
+  
+  // Referencia al componente Navbar para actualizar el carrito
+  const navbarRef = useRef();
+  const { toggle: toggleCart } = useCartStore();
   
   // Cargar categorías
   useEffect(() => {
@@ -93,22 +99,23 @@ const Shop = () => {
     setCurrentPage(1); // Resetear a la primera página al buscar
   };
   
-  // Funciones de paginación
-  const goToNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(prev => prev + 1);
-    }
+  const handlePageChange = (selectedItem) => {
+    setCurrentPage(selectedItem.selected + 1);
   };
   
-  const goToPreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(prev => prev - 1);
+  // Función para actualizar el carrito y abrirlo opcionalmente
+  const handleCartUpdate = (openCart = false) => {
+    if (navbarRef.current) {
+      navbarRef.current.fetchCart();
+      if (openCart) {
+        toggleCart();
+      }
     }
   };
   
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
+      <Navbar ref={navbarRef} />
       
       {/* Banner de la tienda */}
       <div className="relative">
@@ -178,7 +185,7 @@ const Shop = () => {
                     return categoria ? (
                       <div 
                         key={categoria.id}
-                        className="flex items-center px-3 py-1 text-sm rounded-full bg-dog-light-green text-dog-green"
+                        className="flex items-center px-3 py-1 text-sm bg-white border rounded-full border-dog-green text-dog-green"
                       >
                         {categoria.nombre}
                         <button 
@@ -218,7 +225,11 @@ const Shop = () => {
             {!loading && !error && products.length > 0 && (
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {products.map(product => (
-                  <ProductCard key={product.id} product={product} />
+                  <ProductCard 
+                    key={product.id} 
+                    product={product}
+                    onCartUpdate={(openCart = false) => handleCartUpdate(openCart)}
+                  />
                 ))}
               </div>
             )}
@@ -226,35 +237,32 @@ const Shop = () => {
             {/* Paginación */}
             {totalPages > 1 && (
               <div className="flex justify-center mt-8">
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={goToPreviousPage}
-                    disabled={currentPage === 1}
-                    className={`flex items-center justify-center w-10 h-10 rounded-full ${
-                      currentPage === 1
-                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                        : 'bg-dog-green text-white hover:bg-dog-light-green'
-                    }`}
-                  >
-                    <FaChevronLeft size={14} />
-                  </button>
-                  
-                  <div className="text-gray-700">
-                    Página {currentPage} de {totalPages}
-                  </div>
-                  
-                  <button
-                    onClick={goToNextPage}
-                    disabled={currentPage === totalPages}
-                    className={`flex items-center justify-center w-10 h-10 rounded-full ${
-                      currentPage === totalPages
-                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                        : 'bg-dog-green text-white hover:bg-dog-light-green'
-                    }`}
-                  >
-                    <FaChevronRight size={14} />
-                  </button>
-                </div>
+                <ReactPaginate
+                  previousLabel={<div className="flex items-center">
+                    <button className="px-1 mx-1 text-sm font-medium">{"<<"}</button>
+                    <button className="px-1 mx-1 text-sm font-medium">{"<"}</button>
+                  </div>}
+                  nextLabel={<div className="flex items-center">
+                    <button className="px-1 mx-1 text-sm font-medium">{">"}</button>
+                    <button className="px-1 mx-1 text-sm font-medium">{">>"}</button>
+                  </div>}
+                  breakLabel="..."
+                  pageCount={totalPages}
+                  marginPagesDisplayed={2}
+                  pageRangeDisplayed={3}
+                  onPageChange={handlePageChange}
+                  containerClassName="flex items-center justify-center space-x-1"
+                  pageClassName="flex items-center justify-center"
+                  pageLinkClassName="w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium hover:bg-gray-100"
+                  previousClassName="flex items-center text-dog-green"
+                  nextClassName="flex items-center text-dog-green"
+                  breakClassName="flex items-center justify-center px-2 text-gray-500"
+                  activeClassName="bg-dog-green"
+                  activeLinkClassName="!text-white hover:!bg-dog-green"
+                  disabledClassName="opacity-50 cursor-not-allowed text-gray-300"
+                  disabledLinkClassName="cursor-not-allowed"
+                  forcePage={currentPage - 1}
+                />
               </div>
             )}
           </div>
