@@ -1,9 +1,11 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 
 const ProductCard = ({ product }) => {
+  const navigate = useNavigate();
+  
   // Formatear el precio con 2 decimales y símbolo de euro
   const formatPrice = (price) => {
     return new Intl.NumberFormat('es-ES', {
@@ -37,17 +39,28 @@ const ProductCard = ({ product }) => {
     }
   };
 
+  // Función para navegar a la página de detalle del producto
+  const handleNavigateToProduct = () => {
+    navigate(`/tienda/producto/${product.id}`);
+  };
+
   return (
     <motion.div 
-      className="flex flex-col h-full overflow-hidden bg-white rounded-lg shadow-md"
+      className="flex flex-col h-full overflow-hidden bg-white rounded-lg shadow-md cursor-pointer"
       whileHover={{ y: -5, transition: { duration: 0.2 } }}
+      onClick={handleNavigateToProduct}
     >
       <div className="relative pb-[100%] overflow-hidden">
-        {product.imagenPrincipal ? (
+        {product.imagenPrincipal && product.imagenPrincipal.trim() !== '' ? (
           <img
             src={product.imagenPrincipal}
             alt={product.nombre}
             className="absolute inset-0 object-cover w-full h-full"
+            onError={(e) => {
+              console.log('Error al cargar la imagen principal:', product.imagenPrincipal);
+              e.target.onerror = null;
+              e.target.src = getDefaultImageByCategory(product.categoria);
+            }}
           />
         ) : (
           <img
@@ -56,8 +69,9 @@ const ProductCard = ({ product }) => {
             className="absolute inset-0 object-cover w-full h-full"
             onError={(e) => {
               // Si falla la carga de la imagen específica, muestra un fallback visual
+              console.log('Error al cargar la imagen de categoría, usando fallback');
               e.target.onerror = null;
-              e.target.src = '/imgs/categories/default-product.jpg';
+              e.target.src = '/imgs/DogWalkLogo.jpg';
             }}
           />
         )}
@@ -92,6 +106,11 @@ const ProductCard = ({ product }) => {
                 : 'bg-gray-400 cursor-not-allowed'
             }`}
             disabled={product.stock <= 0}
+            onClick={(e) => {
+              e.stopPropagation(); // Evita que se propague al padre (navegación)
+              // Aquí iría la lógica de añadir al carrito
+              console.log("Añadir al carrito:", product.id);
+            }}
           >
             Añadir
           </button>

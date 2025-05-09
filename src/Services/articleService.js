@@ -41,6 +41,22 @@ const articleService = {
   getById: async (id) => {
     try {
       const response = await fetcher(`/api/Articulo/${id}`);
+      
+      // Procesar la respuesta para asegurarnos de que las imágenes son correctas
+      if (response) {
+        // Asegurar que el campo imagenes sea siempre un array
+        if (!response.imagenes || !Array.isArray(response.imagenes)) {
+          response.imagenes = [];
+        }
+        
+        // Filtrar imágenes vacías o no válidas
+        response.imagenes = response.imagenes.filter(img => 
+          img && typeof img === 'string' && img.trim() !== ''
+        );
+        
+        console.log('Producto cargado:', response);
+      }
+      
       return response;
     } catch (error) {
       console.error(`Error al obtener el artículo con ID ${id}:`, error);
