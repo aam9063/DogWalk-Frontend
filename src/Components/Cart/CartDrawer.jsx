@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 // eslint-disable-next-line
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaTrash, FaPlus, FaMinus, FaShoppingBag } from 'react-icons/fa';
 import cartService from '../../Services/cartService';
+import checkoutService from '../../Services/checkoutService';
 import useCartStore from '../../store/cartStore';
 
 const CartDrawer = ({ cart, onCartUpdate }) => {
   const { isOpen, close } = useCartStore();
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleUpdateQuantity = async (itemId, currentQuantity, increment) => {
     try {
@@ -35,6 +37,21 @@ const CartDrawer = ({ cart, onCartUpdate }) => {
       onCartUpdate();
     } catch (error) {
       console.error('Error al vaciar el carrito:', error);
+    }
+  };
+
+  const handleCheckout = async () => {
+    try {
+      setIsProcessing(true);
+      const response = await checkoutService.createCheckoutSession();
+      
+      if (response.success && response.redirectUrl) {
+        window.location.href = response.redirectUrl;
+      }
+    } catch (error) {
+      console.error('Error al procesar el checkout:', error);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -149,10 +166,18 @@ const CartDrawer = ({ cart, onCartUpdate }) => {
                   </div>
                   <div className="space-y-3">
                     <button
-                      className="flex items-center justify-center w-full px-4 py-3 text-white rounded-md bg-dog-green hover:bg-dog-light-green"
+                      onClick={handleCheckout}
+                      disabled={isProcessing}
+                      className="flex items-center justify-center w-full px-4 py-3 text-white rounded-md bg-dog-green hover:bg-dog-light-green disabled:bg-gray-400 disabled:cursor-not-allowed"
                     >
-                      <FaShoppingBag className="mr-2" />
-                      Comprar Ahora
+                      {isProcessing ? (
+                        <span>Procesando...</span>
+                      ) : (
+                        <>
+                          <FaShoppingBag className="mr-2" />
+                          Comprar Ahora
+                        </>
+                      )}
                     </button>
                     <button
                       onClick={handleClearCart}

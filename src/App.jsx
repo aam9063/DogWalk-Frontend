@@ -18,6 +18,7 @@ import ChatAssistant from './Components/ChatAssistant'
 import ScrollProgress from './Components/ScrollProgress'
 import useAuthStore from './store/authStore'
 import useInitAuth from './hooks/useInitAuth'
+import CheckoutSuccess from './Pages/CheckoutSuccess'
 import './App.css'
 
 // Componente para proteger rutas
@@ -78,6 +79,7 @@ function App() {
         <Route path="/buscar-cuidadores" element={<SearchCaregivers />} />
         <Route path="/tienda" element={<Shop />} />
         <Route path="/tienda/producto/:productId" element={<ProductDetail />} />
+        <Route path="/checkout/success" element={<CheckoutSuccess />} />
       </Routes>
       
       {/* Botón para volver arriba */}
