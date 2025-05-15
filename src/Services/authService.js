@@ -41,8 +41,8 @@ export const authService = {
       return userData;
     } catch (error) {
       console.error('Error al verificar token:', error);
-      // Si es un error 401 o 403, significa que el token no es válido
-      if (error.status === 401 || error.status === 403) {
+      // Solo eliminar el token si es explícitamente un error de autenticación
+      if (error.status === 401) {
         localStorage.removeItem('token');
       }
       throw error;

@@ -19,6 +19,7 @@ import ScrollProgress from './Components/ScrollProgress'
 import useAuthStore from './store/authStore'
 import useInitAuth from './hooks/useInitAuth'
 import CheckoutSuccess from './Pages/CheckoutSuccess'
+import PaseadorProfile from './Pages/PaseadorProfile'
 import './App.css'
 
 // Componente para proteger rutas
@@ -80,6 +81,7 @@ function App() {
         <Route path="/tienda" element={<Shop />} />
         <Route path="/tienda/producto/:productId" element={<ProductDetail />} />
         <Route path="/checkout/success" element={<CheckoutSuccess />} />
+        <Route path="/paseador/:paseadorId" element={<PaseadorProfile />} />
       </Routes>
       
       {/* Botón para volver arriba */}

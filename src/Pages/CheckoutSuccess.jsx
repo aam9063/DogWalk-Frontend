@@ -3,12 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { FaCheckCircle } from 'react-icons/fa';
 import Navbar from '../Components/Navbar';
 import Footer from '../Components/Footer';
+import useAuthStore from '../store/authStore';
 
 const CheckoutSuccess = () => {
   const navigate = useNavigate();
   const [countdown, setCountdown] = useState(5);
+  const verifyAuth = useAuthStore(state => state.verifyAuth);
 
   useEffect(() => {
+    // Verificar autenticación al cargar el componente
+    verifyAuth();
+    
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
@@ -20,7 +25,7 @@ const CheckoutSuccess = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [navigate]);
+  }, [navigate, verifyAuth]);
 
   return (
     <div className="flex flex-col min-h-screen">

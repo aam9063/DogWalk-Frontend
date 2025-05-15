@@ -168,7 +168,7 @@ const HowItWorks = () => {
                     whileHover={{ scale: 1.1, rotate: 5 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <div className="flex items-center justify-center w-10 h-10 rounded-full icon-container">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-full how-it-works-icon">
                       <img
                         src="/icons/Apply.svg"
                         alt="Cuidadores de confianza"
@@ -195,7 +195,7 @@ const HowItWorks = () => {
                     whileHover={{ scale: 1.1, rotate: 5 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <div className="flex items-center justify-center w-10 h-10 rounded-full icon-container">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-full how-it-works-icon">
                       <img
                         src="/icons/Star.svg"
                         alt="Opiniones verificadas"
@@ -293,7 +293,7 @@ const HowItWorks = () => {
                       whileHover={{ scale: 1.1, rotate: 5 }}
                       transition={{ duration: 0.3 }}
                     >
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full icon-container">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full how-it-works-icon">
                         <img 
                           src="/icons/Check Mark.svg" 
                           alt="Cancelación gratuita" 
@@ -317,7 +317,7 @@ const HowItWorks = () => {
                       whileHover={{ scale: 1.1, rotate: -5 }}
                       transition={{ duration: 0.3 }}
                     >
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full icon-container">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full how-it-works-icon">
                         <img 
                           src="/icons/Lock.svg" 
                           alt="Pagos seguros" 
@@ -393,7 +393,7 @@ const HowItWorks = () => {
                       whileHover={{ scale: 1.1, rotate: 5 }}
                       transition={{ duration: 0.3 }}
                     >
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full icon-container">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full how-it-works-icon">
                         <img
                           src="/icons/Veterinarian.svg"
                           alt="Cobertura veterinaria"
@@ -417,7 +417,7 @@ const HowItWorks = () => {
                       whileHover={{ scale: 1.1, rotate: -5 }}
                       transition={{ duration: 0.3 }}
                     >
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full icon-container">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full how-it-works-icon">
                         <img
                           src="/icons/ChatBubble3.svg"
                           alt="Chat de soporte y email"

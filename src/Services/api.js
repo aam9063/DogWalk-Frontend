@@ -11,13 +11,14 @@ const MOCK_USER = {
 };
 
 export const fetcher = async (url, options = {}) => {
-  const token = localStorage.getItem('token');
+  const { skipAuth, ...restOptions } = options;
+  const token = !skipAuth ? localStorage.getItem('token') : null;
   const headers = {
     'Content-Type': 'application/json',
-    ...options.headers,
+    ...restOptions.headers,
   };
   
-  if (token) {
+  if (token && !skipAuth) {
     headers['Authorization'] = `Bearer ${token}`;
   }
   
@@ -28,31 +29,22 @@ export const fetcher = async (url, options = {}) => {
     
     // Intentar la petición al backend
     const response = await fetch(`${baseUrl}/${normalizedUrl}`, {
-      ...options,
+      ...restOptions,
       headers,
     });
 
+    // No eliminar el token aquí en caso de error
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const error = new Error(`HTTP error! status: ${response.status}`);
+      error.status = response.status;
+      throw error;
     }
     
     return response.json();
   } catch (error) {
     console.warn('Error en la petición al backend:', error);
     
-    // Si es un login y el backend no está disponible, usar datos mock
-    if (url.includes('/api/Auth/login')) {
-      console.log('Usando datos mock para login...');
-      return Promise.resolve(MOCK_USER);
-    }
-    
-    // Si es una verificación de token y el backend no está disponible
-    if (url.includes('/api/Auth/verify')) {
-      const mockToken = localStorage.getItem('token');
-      if (mockToken === 'mock-token-123') {
-        return Promise.resolve(MOCK_USER);
-      }
-    }
+   
     
     throw error;
   }

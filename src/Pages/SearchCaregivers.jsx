@@ -110,7 +110,7 @@ const SearchCaregivers = () => {
                 <h3 style="margin: 0 0 5px; font-size: 16px;">${nombre} ${apellido}</h3>
                 <p style="margin: 0 0 5px; font-size: 14px;">${direccion}</p>
                 ${precioMinimo}
-                <a href="/cuidadores/${id}" style="color: #4CAF50; font-size: 14px;">Ver perfil</a>
+                <a href="/paseador/${id}" style="color: #4CAF50; font-size: 14px;">Ver perfil</a>
               </div>
             `);
           
@@ -562,7 +562,7 @@ const SearchCaregivers = () => {
                         <div className="flex items-start gap-4">
                           {/* Avatar */}
                           <div className="flex-shrink-0">
-                            <Link to={`/cuidadores/${cuidador.id}`}>
+                            <Link to={`/paseador/${cuidador.id}`}>
                               <img 
                                 src={cuidador.foto || "/imgs/default-avatar.jpg"} 
                                 alt={`${cuidador.nombre} ${cuidador.apellido}`} 
@@ -574,7 +574,7 @@ const SearchCaregivers = () => {
                           {/* Información */}
                           <div className="flex-1">
                             <div className="flex justify-between">
-                              <Link to={`/cuidadores/${cuidador.id}`} className="hover:underline">
+                              <Link to={`/paseador/${cuidador.id}`} className="hover:underline">
                                 <h3 className="mb-1 text-lg font-semibold">
                                   {cuidador.nombre} {cuidador.apellido}
                                 </h3>
