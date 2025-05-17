@@ -20,6 +20,8 @@ import useAuthStore from './store/authStore'
 import useInitAuth from './hooks/useInitAuth'
 import CheckoutSuccess from './Pages/CheckoutSuccess'
 import PaseadorProfile from './Pages/PaseadorProfile'
+import { startAutoRefresh, stopAutoRefresh } from './Services/autoRefreshService'
+import { useEffect } from 'react'
 import './App.css'
 
 // Componente para proteger rutas
@@ -51,6 +53,21 @@ const ProtectedRoute = ({ children }) => {
 function App() {
   // Inicializar autenticación al cargar la app
   useInitAuth();
+  
+  // Estado de autenticación para controlar el auto-refresh
+  const isAuthenticated = useAuthStore(state => state.isAuthenticated);
+  
+  // Iniciar/detener la renovación automática según el estado de autenticación
+  useEffect(() => {
+    if (isAuthenticated) {
+      startAutoRefresh();
+    } else {
+      stopAutoRefresh();
+    }
+    
+    // Limpiar al desmontar
+    return () => stopAutoRefresh();
+  }, [isAuthenticated]);
 
   return (
     <BrowserRouter>

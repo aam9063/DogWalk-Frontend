@@ -58,12 +58,18 @@ const Login = () => {
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem('token');
-      if (token || isAuthenticated) {
+      if (!token) return;
+
+      if (isAuthenticated) {
         setIsRedirecting(true);
-        // Pequeño retraso para evitar parpadeos
-        setTimeout(() => {
-          navigate('/dashboard', { replace: true });
-        }, 100);
+        navigate('/dashboard', { replace: true });
+      } else {
+        // Si hay token pero no está autenticado, intentar verificar
+        try {
+          await useAuthStore.getState().verifyAuth();
+        } catch (error) {
+          console.error('Error al verificar autenticación:', error);
+        }
       }
     };
     
