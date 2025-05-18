@@ -22,6 +22,7 @@ import CheckoutSuccess from './Pages/CheckoutSuccess'
 import PaseadorProfile from './Pages/PaseadorProfile'
 import { startAutoRefresh, stopAutoRefresh } from './Services/autoRefreshService'
 import { useEffect } from 'react'
+import { ToastContainer } from 'react-toastify'
 import './App.css'
 
 // Componente para proteger rutas
@@ -70,43 +71,57 @@ function App() {
   }, [isAuthenticated]);
 
   return (
-    <BrowserRouter>
-      {/* Barra de progreso de scroll */}
-      <ScrollProgress />
-      
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/login" element={<Login />} />
-        <Route 
-          path="/dashboard" 
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          } 
-        />
-        <Route path="/chat-test" element={<ChatTest />} />
-        <Route path="/chat-demo" element={<ChatDemo />} />
-        <Route path="/politica-de-privacidad" element={<PrivacyPolicy />} />
-        <Route path="/como-funciona" element={<HowItWorks />} />
-        <Route path="/servicios" element={<Services />} />
-        <Route path="/contacto" element={<Contact />} />
-        <Route path="/dsadisclosure" element={<DSADisclosure />} />
-        <Route path="/ley-de-servicios-digitales" element={<DSADisclosure />} />
-        <Route path="/buscar-cuidadores" element={<SearchCaregivers />} />
-        <Route path="/tienda" element={<Shop />} />
-        <Route path="/tienda/producto/:productId" element={<ProductDetail />} />
-        <Route path="/checkout/success" element={<CheckoutSuccess />} />
-        <Route path="/paseador/:paseadorId" element={<PaseadorProfile />} />
-      </Routes>
-      
-      {/* Botón para volver arriba */}
-      <ScrollToTopButton />
-      
-      {/* Asistente virtual */}
-      <ChatAssistant />
-    </BrowserRouter>
+    <>
+      <BrowserRouter>
+        {/* Barra de progreso de scroll */}
+        <ScrollProgress />
+        
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={<Login />} />
+          <Route 
+            path="/dashboard" 
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route path="/chat-test" element={<ChatTest />} />
+          <Route path="/chat-demo" element={<ChatDemo />} />
+          <Route path="/politica-de-privacidad" element={<PrivacyPolicy />} />
+          <Route path="/como-funciona" element={<HowItWorks />} />
+          <Route path="/servicios" element={<Services />} />
+          <Route path="/contacto" element={<Contact />} />
+          <Route path="/dsadisclosure" element={<DSADisclosure />} />
+          <Route path="/ley-de-servicios-digitales" element={<DSADisclosure />} />
+          <Route path="/buscar-cuidadores" element={<SearchCaregivers />} />
+          <Route path="/tienda" element={<Shop />} />
+          <Route path="/tienda/producto/:productId" element={<ProductDetail />} />
+          <Route path="/checkout/success" element={<CheckoutSuccess />} />
+          <Route path="/paseador/:paseadorId" element={<PaseadorProfile />} />
+        </Routes>
+        
+        {/* Botón para volver arriba */}
+        <ScrollToTopButton />
+        
+        {/* Asistente virtual */}
+        <ChatAssistant />
+      </BrowserRouter>
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+    </>
   )
 }
 
