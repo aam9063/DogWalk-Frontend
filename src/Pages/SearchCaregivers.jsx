@@ -6,9 +6,11 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import caregiverService from "../Services/caregiverService";
 import serviceService from "../Services/serviceService";
+import paseadorProfileService from "../Services/paseadorProfileService";
 // eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import FadeIn from "../Components/FadeIn";
+import { FaUser, FaStar } from "react-icons/fa";
 
 // Establecer token de acceso de Mapbox
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
@@ -36,6 +38,7 @@ const SearchCaregivers = () => {
   const [error, setError] = useState(null);
   const [map, setMap] = useState(null);
   const [markers, setMarkers] = useState([]);
+  const [valoraciones, setValoraciones] = useState({});
   
   // Filtros
   const [filtros, setFiltros] = useState({
@@ -154,7 +157,23 @@ const SearchCaregivers = () => {
     actualizarMarcadoresRef.current = actualizarMarcadores;
   }, [actualizarMarcadores]);
   
-  // Carga inicial de datos - usando ref de actualizarMarcadores
+  // Función para cargar las valoraciones de un paseador
+  const cargarValoraciones = async (paseadorId) => {
+    try {
+      const rankingData = await paseadorProfileService.getRankingResumen(paseadorId);
+      setValoraciones(prev => ({
+        ...prev,
+        [paseadorId]: {
+          promedio: rankingData.promedioValoracion,
+          total: rankingData.cantidadValoraciones
+        }
+      }));
+    } catch (error) {
+      console.error('Error al cargar valoraciones:', error);
+    }
+  };
+  
+  // Modificar la carga inicial de datos para incluir las valoraciones
   const cargarDatosIniciales = useCallback(async () => {
     if (isSearchingRef.current) return;
     isSearchingRef.current = true;
@@ -164,6 +183,11 @@ const SearchCaregivers = () => {
       const data = await caregiverService.getAll();
       console.log("Datos iniciales cargados:", data);
       setCuidadores(data);
+      
+      // Cargar valoraciones para cada cuidador
+      data.forEach(cuidador => {
+        cargarValoraciones(cuidador.id);
+      });
       
       if (map) {
         actualizarMarcadoresRef.current(data);
@@ -563,11 +587,17 @@ const SearchCaregivers = () => {
                           {/* Avatar */}
                           <div className="flex-shrink-0">
                             <Link to={`/paseador/${cuidador.id}`}>
-                              <img 
-                                src={cuidador.foto || "/imgs/default-avatar.jpg"} 
-                                alt={`${cuidador.nombre} ${cuidador.apellido}`} 
-                                className="object-cover w-16 h-16 rounded-full"
-                              />
+                              {cuidador.foto ? (
+                                <img 
+                                  src={cuidador.foto} 
+                                  alt={`${cuidador.nombre} ${cuidador.apellido}`} 
+                                  className="object-cover w-16 h-16 rounded-full"
+                                />
+                              ) : (
+                                <div className="flex items-center justify-center w-16 h-16 text-white rounded-full bg-dog-green">
+                                  <FaUser size={24} />
+                                </div>
+                              )}
                             </Link>
                           </div>
                           
@@ -588,20 +618,23 @@ const SearchCaregivers = () => {
                             
                             <div className="flex items-center mb-1">
                               <div className="flex">
-                                {[1, 2, 3, 4, 5].map(star => (
-                                  <svg 
-                                    key={star} 
-                                    className={`w-4 h-4 ${star <= Math.round(cuidador.calificacion || 0) ? 'text-yellow-400' : 'text-gray-300'}`} 
-                                    fill="currentColor" 
-                                    viewBox="0 0 20 20"
-                                  >
-                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.799-2.034c-.784-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                                  </svg>
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <FaStar 
+                                    key={star}
+                                    className={`w-4 h-4 ${
+                                      star <= (valoraciones[cuidador.id]?.promedio || 0)
+                                        ? 'text-yellow-400' 
+                                        : 'text-gray-300'
+                                    }`}
+                                  />
                                 ))}
                               </div>
                               <span className="ml-1 text-sm text-gray-600">
-                                {cuidador.calificacion ? cuidador.calificacion.toFixed(1) : "Sin valoraciones"} 
-                                {cuidador.totalResenas ? ` (${cuidador.totalResenas})` : ""}
+                                {valoraciones[cuidador.id]?.promedio 
+                                  ? `${valoraciones[cuidador.id].promedio.toFixed(1)}` 
+                                  : "Sin valoraciones"} 
+                                {valoraciones[cuidador.id]?.total > 0 && 
+                                  ` (${valoraciones[cuidador.id].total} valoraciones)`}
                               </span>
                             </div>
                             

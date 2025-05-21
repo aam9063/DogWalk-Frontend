@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { FaMapMarkerAlt, FaStar, FaPhone, FaEnvelope } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaStar, FaPhone, FaEnvelope, FaUser } from 'react-icons/fa';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import Navbar from '../Components/Navbar';
@@ -357,12 +357,18 @@ const PaseadorProfile = () => {
           <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
             {/* Columna izquierda - Foto y datos básicos */}
             <div className="text-center">
-              <img 
-                src={profile.foto || "/imgs/default-avatar.jpg"} 
-                alt={profile.nombre}
-                className="object-cover w-48 h-48 mx-auto mb-4 rounded-full"
-                loading="lazy"
-              />
+              {profile.foto ? (
+                <img 
+                  src={profile.foto} 
+                  alt={profile.nombre}
+                  className="object-cover w-48 h-48 mx-auto mb-4 rounded-full"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="flex items-center justify-center w-48 h-48 mx-auto mb-4 text-white rounded-full bg-dog-green">
+                  <FaUser size={64} />
+                </div>
+              )}
               <h1 className="mb-2 text-2xl font-bold">
                 {profile.nombre} {profile.apellido}
               </h1>
@@ -579,12 +585,18 @@ const PaseadorProfile = () => {
             {valoraciones.map((valoracion) => (
               <div key={valoracion.id} className="p-4 bg-white rounded-lg shadow">
                 <div className="flex items-center mb-2">
-                  <img 
-                    src={valoracion.fotoUsuario || "/imgs/default-avatar.jpg"} 
-                    alt={valoracion.nombreUsuario}
-                    className="object-cover w-10 h-10 mr-3 rounded-full"
-                    loading="lazy"
-                  />
+                  {valoracion.fotoUsuario ? (
+                    <img 
+                      src={valoracion.fotoUsuario} 
+                      alt={valoracion.nombreUsuario}
+                      className="object-cover w-10 h-10 mr-3 rounded-full"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center w-10 h-10 mr-3 text-white rounded-full bg-dog-green">
+                      <FaUser size={20} />
+                    </div>
+                  )}
                   <div>
                     <h3 className="font-semibold">{valoracion.nombreUsuario}</h3>
                     <div className="flex">

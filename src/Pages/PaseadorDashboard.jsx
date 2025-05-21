@@ -1,0 +1,708 @@
+import React, { useEffect, useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { 
+  getPaseadorDashboard, 
+  getPaseadorProfile,
+  getPaseadorReservas,
+  updatePaseadorProfile,
+  confirmarReserva,
+  cancelarReserva,
+  completarReserva
+} from '../Services/paseadorDashboardService';
+import { 
+  FaMoneyBillWave, 
+  FaStar, 
+  FaUsers, 
+  FaClock, 
+  FaCheckCircle, 
+  FaHourglassHalf,
+  FaUser,
+  FaEnvelope,
+  FaPhone,
+  FaMapMarkerAlt,
+  FaDog,
+  FaHome,
+  FaClipboardList
+} from 'react-icons/fa';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+// eslint-disable-next-line
+import { motion } from 'framer-motion';
+import useAuthStore from '../store/authStore';
+import Navbar from '../Components/Navbar';
+import { toast } from 'react-toastify';
+
+const PaseadorDashboard = () => {
+  const navigate = useNavigate();
+  const user = useAuthStore(state => state.user);
+  const logout = useAuthStore(state => state.logout);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [profileData, setProfileData] = useState(null);
+  const [reservasData, setReservasData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState(0);
+  const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
+  const [editProfileForm, setEditProfileForm] = useState({
+    nombre: '',
+    apellido: '',
+    direccion: '',
+    telefono: ''
+  });
+  const sidebarRef = React.useRef(null);
+
+  useEffect(() => {
+    const fetchAllData = async () => {
+      try {
+        setLoading(true);
+        const [dashboard, profile, reservas] = await Promise.all([
+          getPaseadorDashboard(),
+          getPaseadorProfile(),
+          getPaseadorReservas()
+        ]);
+        setDashboardData(dashboard);
+        setProfileData(profile);
+        setReservasData(reservas);
+      } catch (err) {
+        setError('Error al cargar los datos');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAllData();
+  }, []);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login', { replace: true });
+  };
+
+  // Función para abrir el modal de edición de perfil
+  const handleOpenEditProfileModal = () => {
+    setEditProfileForm({
+      nombre: profileData?.nombre || '',
+      apellido: profileData?.apellido || '',
+      direccion: profileData?.direccion || '',
+      telefono: profileData?.telefono || ''
+    });
+    setIsEditProfileModalOpen(true);
+  };
+
+  // Función para manejar la actualización del perfil
+  const handleProfileUpdate = async (e) => {
+    e.preventDefault();
+    try {
+      // Validar que todos los campos requeridos estén presentes
+      if (!editProfileForm.nombre || !editProfileForm.apellido || !editProfileForm.direccion || !editProfileForm.telefono) {
+        toast.error('Todos los campos son requeridos');
+        return;
+      }
+
+      // Validar el formato del teléfono (solo números)
+      if (!/^\d+$/.test(editProfileForm.telefono)) {
+        toast.error('El teléfono solo debe contener números');
+        return;
+      }
+
+      // Preparar los datos exactamente como los espera el endpoint
+      const formData = {
+        nombre: editProfileForm.nombre.trim(),
+        apellido: editProfileForm.apellido.trim(),
+        direccion: editProfileForm.direccion.trim(),
+        telefono: editProfileForm.telefono.trim(),
+        latitud: 0,
+        longitud: 0
+      };
+
+      // Guardar los datos actuales antes de la actualización
+      const previousData = { ...profileData };
+
+      // Intentar actualizar el perfil
+      await updatePaseadorProfile(formData);
+      
+      // Forzar una recarga de los datos del perfil
+      const refreshedProfile = await getPaseadorProfile();
+      
+      // Verificar si los datos realmente cambiaron
+      const hasChanged = 
+        refreshedProfile.nombre !== previousData.nombre ||
+        refreshedProfile.apellido !== previousData.apellido ||
+        refreshedProfile.direccion !== previousData.direccion ||
+        refreshedProfile.telefono !== previousData.telefono;
+
+      // Actualizar el estado con los datos recargados
+      setProfileData(refreshedProfile);
+      
+      // Cerrar el modal
+      setIsEditProfileModalOpen(false);
+
+      // Mostrar mensaje apropiado
+      if (hasChanged) {
+        toast.success('Perfil actualizado correctamente');
+      } else {
+        toast.warning('La actualización fue exitosa pero los cambios podrían no haberse guardado en la base de datos. Por favor, contacta al administrador.');
+      }
+
+    } catch (error) {
+      console.error('Error completo:', error);
+      toast.error('Error al actualizar el perfil. Por favor, inténtalo de nuevo.');
+    }
+  };
+
+  // Efecto para mantener sincronizados los datos del perfil
+  useEffect(() => {
+    const loadProfileData = async () => {
+      if (activeTab === 1) {
+        try {
+          const data = await getPaseadorProfile();
+          console.log('Datos del perfil cargados:', data);
+          setProfileData(data);
+          setEditProfileForm({
+            nombre: data.nombre || '',
+            apellido: data.apellido || '',
+            direccion: data.direccion || '',
+            telefono: data.telefono || ''
+          });
+        } catch (error) {
+          console.error('Error al cargar el perfil:', error);
+          toast.error('Error al cargar los datos del perfil');
+        }
+      }
+    };
+
+    loadProfileData();
+  }, [activeTab]);
+
+  // Función para manejar los cambios de estado de las reservas
+  const handleReservaStatusChange = async (reservaId, action) => {
+    try {
+      let actionFn;
+      let successMessage;
+      
+      switch (action) {
+        case 'confirmar':
+          actionFn = confirmarReserva;
+          successMessage = 'Reserva confirmada correctamente';
+          break;
+        case 'cancelar':
+          if (!window.confirm('¿Estás seguro de que deseas cancelar esta reserva?')) {
+            return;
+          }
+          actionFn = cancelarReserva;
+          successMessage = 'Reserva cancelada correctamente';
+          break;
+        case 'completar':
+          actionFn = completarReserva;
+          successMessage = 'Reserva marcada como completada';
+          break;
+        default:
+          return;
+      }
+
+      await actionFn(reservaId);
+      
+      // Recargar las reservas después de la acción
+      const updatedReservas = await getPaseadorReservas();
+      setReservasData(updatedReservas);
+      
+      toast.success(successMessage);
+    } catch (error) {
+      console.error(`Error al ${action} la reserva:`, error);
+      toast.error(`Error al ${action} la reserva. Por favor, inténtalo de nuevo.`);
+    }
+  };
+
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="w-16 h-16 border-4 rounded-full border-t-dog-green border-r-dog-green border-b-transparent border-l-transparent animate-spin"></div>
+        </div>
+      </>
+    );
+  }
+
+  if (error) {
+    return (
+      <>
+        <Navbar />
+        <div className="flex items-center justify-center min-h-screen">
+          <p className="text-red-600">{error}</p>
+        </div>
+      </>
+    );
+  }
+
+  const statsCards = [
+    {
+      title: 'Total Ingresos',
+      value: `€${dashboardData?.totalIngresos || 0}`,
+      icon: <FaMoneyBillWave className="w-10 h-10 text-green-500" />
+    },
+    {
+      title: 'Valoración Promedio',
+      value: `${dashboardData?.valoracionPromedio || 0}/5`,
+      icon: <FaStar className="w-10 h-10 text-yellow-500" />
+    },
+    {
+      title: 'Total Valoraciones',
+      value: dashboardData?.totalValoraciones || 0,
+      icon: <FaUsers className="w-10 h-10 text-blue-500" />
+    },
+    {
+      title: 'Total Reservas',
+      value: dashboardData?.totalReservas || 0,
+      icon: <FaClock className="w-10 h-10 text-purple-500" />
+    },
+    {
+      title: 'Reservas Completadas',
+      value: dashboardData?.reservasCompletadas || 0,
+      icon: <FaCheckCircle className="w-10 h-10 text-green-500" />
+    },
+    {
+      title: 'Reservas Pendientes',
+      value: dashboardData?.reservasPendientes || 0,
+      icon: <FaHourglassHalf className="w-10 h-10 text-orange-500" />
+    }
+  ];
+
+  const getEstadoColor = (estado) => {
+    switch (estado) {
+      case 'Pendiente':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'Completada':
+        return 'bg-green-100 text-green-800';
+      case 'Cancelada':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  return (
+    <>
+      <div className="min-h-screen py-8 bg-gray-50">
+        {/* Header */}
+        <header className="mb-3 bg-white shadow-md">
+          <div className="container flex items-center justify-between p-4 mx-auto">
+            <div className="flex items-center space-x-4">
+              <h1 className="text-2xl font-bold text-dog-dark">Dashboard de Paseador</h1>
+              <motion.div 
+                whileHover={{ scale: 1.05 }} 
+                whileTap={{ scale: 0.95 }}
+                className="inline-block"
+              >
+                <Link 
+                  to="/" 
+                  className="flex items-center px-3 py-1 text-sm text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200"
+                >
+                  <FaHome className="mr-1" /> Inicio
+                </Link>
+              </motion.div>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="hidden text-sm text-gray-500 md:inline-block">
+                Hola, <span className="font-medium text-dog-green">{user?.nombre || user?.email || 'Usuario'}</span>
+              </span>
+              <motion.button 
+                onClick={handleLogout}
+                className="px-4 py-2 text-white transition rounded-md bg-dog-green hover:bg-dog-light-green"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Cerrar sesión
+              </motion.button>
+            </div>
+          </div>
+        </header>
+
+        <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+          {/* Grid para sidebar y contenido principal */}
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-12">
+            {/* Sidebar */}
+            <div ref={sidebarRef} className="p-4 bg-white rounded-lg shadow md:col-span-3">
+              <div className="p-4 mb-6 text-center rounded-lg bg-gray-50">
+                <motion.div 
+                  className="inline-flex items-center justify-center w-20 h-20 mb-3 overflow-hidden text-white rounded-full bg-dog-green"
+                  initial={{ scale: 0.8 }}
+                  animate={{ scale: 1 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                >
+                  {profileData?.fotoPerfil ? (
+                    <img 
+                      src={profileData.fotoPerfil} 
+                      alt="Perfil" 
+                      className="object-cover w-full h-full"
+                    />
+                  ) : (
+                    <FaUser size={32} />
+                  )}
+                </motion.div>
+                <motion.h3 
+                  className="text-lg font-semibold"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 0.3 }}
+                >
+                  {user?.nombre || 'Usuario'}
+                </motion.h3>
+                <motion.p 
+                  className="text-sm text-gray-500"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 0.4 }}
+                >
+                  {user?.email || 'email@ejemplo.com'}
+                </motion.p>
+              </div>
+              
+              <nav>
+                <ul className="space-y-2">
+                  <motion.li whileHover={{ x: 5 }} transition={{ duration: 0.2 }}>
+                    <button 
+                      className={`w-full flex items-center p-3 text-left rounded-md ${activeTab === 0 ? 'bg-dog-green text-white' : 'hover:bg-gray-100'}`}
+                      onClick={() => setActiveTab(0)}
+                    >
+                      <FaClipboardList className="mr-3" />
+                      Dashboard
+                    </button>
+                  </motion.li>
+                  <motion.li whileHover={{ x: 5 }} transition={{ duration: 0.2 }}>
+                    <button 
+                      className={`w-full flex items-center p-3 text-left rounded-md ${activeTab === 1 ? 'bg-dog-green text-white' : 'hover:bg-gray-100'}`}
+                      onClick={() => setActiveTab(1)}
+                    >
+                      <FaUser className="mr-3" />
+                      Mi Perfil
+                    </button>
+                  </motion.li>
+                  <motion.li whileHover={{ x: 5 }} transition={{ duration: 0.2 }}>
+                    <button 
+                      className={`w-full flex items-center p-3 text-left rounded-md ${activeTab === 2 ? 'bg-dog-green text-white' : 'hover:bg-gray-100'}`}
+                      onClick={() => setActiveTab(2)}
+                    >
+                      <FaDog className="mr-3" />
+                      Mis Reservas
+                    </button>
+                  </motion.li>
+                </ul>
+              </nav>
+            </div>
+
+            {/* Contenido Principal */}
+            <div className="p-6 bg-white rounded-lg shadow md:col-span-9">
+              {activeTab === 0 && (
+                <>
+                  <h1 className="mb-8 text-3xl font-bold text-gray-900">
+                    Dashboard de Paseador
+                  </h1>
+
+                  <div className="grid grid-cols-1 gap-6 mb-8 md:grid-cols-2 lg:grid-cols-3">
+                    {statsCards.map((stat, index) => (
+                      <div
+                        key={index}
+                        className="p-6 transition-shadow bg-white rounded-lg shadow-sm hover:shadow-md"
+                      >
+                        <div className="flex items-center mb-4">
+                          {stat.icon}
+                          <h2 className="ml-3 text-lg font-semibold text-gray-700">
+                            {stat.title}
+                          </h2>
+                        </div>
+                        <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                    <div className="p-6 bg-white rounded-lg shadow-sm">
+                      <h2 className="mb-6 text-xl font-semibold text-gray-900">
+                        Servicios Más Reservados
+                      </h2>
+                      <div className="h-80">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={dashboardData?.serviciosMasReservados || []}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="key" />
+                            <YAxis />
+                            <Tooltip />
+                            <Bar dataKey="value" fill="#8884d8" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+
+                    <div className="p-6 bg-white rounded-lg shadow-sm">
+                      <h2 className="mb-6 text-xl font-semibold text-gray-900">
+                        Reservas por Día
+                      </h2>
+                      <div className="h-80">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={dashboardData?.reservasPorDia || []}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis 
+                              dataKey="key" 
+                              tickFormatter={(value) => new Date(value).toLocaleDateString()} 
+                            />
+                            <YAxis />
+                            <Tooltip 
+                              labelFormatter={(value) => new Date(value).toLocaleDateString()} 
+                            />
+                            <Bar dataKey="value" fill="#82ca9d" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {activeTab === 1 && (
+                <>
+                  <h1 className="mb-8 text-3xl font-bold text-gray-900">
+                    Mi Perfil
+                  </h1>
+                  <div className="bg-white rounded-lg shadow-sm">
+                    <div className="p-6">
+                      <div className="flex items-center justify-between mb-8">
+                        <div className="flex items-center">
+                          <img
+                            src={profileData?.foto || '/default-avatar.jpg'}
+                            alt="Foto de perfil"
+                            className="object-cover w-24 h-24 rounded-full"
+                          />
+                          <div className="ml-6">
+                            <h2 className="text-2xl font-bold text-gray-900">
+                              {profileData?.nombre} {profileData?.apellido}
+                            </h2>
+                            <p className="text-gray-600">Paseador Profesional</p>
+                          </div>
+                        </div>
+                        <motion.button
+                          onClick={handleOpenEditProfileModal}
+                          className="px-4 py-2 text-white rounded-md bg-dog-green hover:bg-dog-light-green"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          Editar Perfil
+                        </motion.button>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                        <div className="space-y-4">
+                          <div className="flex items-center">
+                            <FaUser className="w-5 h-5 text-dog-green" />
+                            <span className="ml-3">Nombre: {profileData?.nombre}</span>
+                          </div>
+                          <div className="flex items-center">
+                            <FaUser className="w-5 h-5 text-dog-green" />
+                            <span className="ml-3">Apellido: {profileData?.apellido}</span>
+                          </div>
+                          <div className="flex items-center">
+                            <FaMapMarkerAlt className="w-5 h-5 text-dog-green" />
+                            <span className="ml-3">Dirección: {profileData?.direccion}</span>
+                          </div>
+                          <div className="flex items-center">
+                            <FaPhone className="w-5 h-5 text-dog-green" />
+                            <span className="ml-3">Teléfono: {profileData?.telefono}</span>
+                          </div>
+                        </div>
+                        <div className="space-y-4">
+                          <div className="flex items-center">
+                            <FaStar className="w-5 h-5 text-dog-green" />
+                            <span className="ml-3">Valoración: {profileData?.valoracionPromedio}/5</span>
+                          </div>
+                          <div className="flex items-center">
+                            <FaUsers className="w-5 h-5 text-dog-green" />
+                            <span className="ml-3">{profileData?.cantidadValoraciones} valoraciones</span>
+                          </div>
+                          <div className="flex items-center">
+                            <FaMapMarkerAlt className="w-5 h-5 text-dog-green" />
+                            <span className="ml-3">Radio de servicio: {profileData?.radioServicio} km</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {activeTab === 2 && (
+                <>
+                  <h1 className="mb-8 text-3xl font-bold text-gray-900">
+                    Mis Reservas
+                  </h1>
+                  <div className="space-y-4">
+                    {reservasData.map((reserva) => (
+                      <div
+                        key={reserva.id}
+                        className="p-6 bg-white rounded-lg shadow-sm"
+                      >
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center">
+                            <div className="p-3 rounded-full bg-dog-green bg-opacity-10">
+                              <FaDog className="w-6 h-6 text-dog-green" />
+                            </div>
+                            <h3 className="ml-4 text-lg font-semibold text-gray-900">
+                              {reserva.nombrePerro || 'Mascota'}
+                            </h3>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${getEstadoColor(reserva.estado)}`}>
+                              {reserva.estado || 'Pendiente'}
+                            </span>
+                            <div className="flex gap-2 ml-4">
+                              {reserva.estado === 'Pendiente' && (
+                                <>
+                                  <button
+                                    onClick={() => handleReservaStatusChange(reserva.id, 'confirmar')}
+                                    className="px-3 py-1 text-white bg-green-500 rounded-md hover:bg-green-600"
+                                  >
+                                    Confirmar
+                                  </button>
+                                  <button
+                                    onClick={() => handleReservaStatusChange(reserva.id, 'cancelar')}
+                                    className="px-3 py-1 text-white bg-red-500 rounded-md hover:bg-red-600"
+                                  >
+                                    Cancelar
+                                  </button>
+                                </>
+                              )}
+                              {reserva.estado === 'Confirmada' && (
+                                <button
+                                  onClick={() => handleReservaStatusChange(reserva.id, 'completar')}
+                                  className="px-3 py-1 text-white bg-blue-500 rounded-md hover:bg-blue-600"
+                                >
+                                  Marcar como Completada
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 gap-4 text-sm text-gray-600 md:grid-cols-2">
+                          <div>
+                            <p><span className="font-medium">Cliente:</span> {reserva.nombreUsuario}</p>
+                            <p><span className="font-medium">Servicio:</span> {reserva.nombreServicio}</p>
+                          </div>
+                          <div>
+                            <p><span className="font-medium">Fecha:</span> {new Date(reserva.fechaReserva).toLocaleDateString()}</p>
+                            <p><span className="font-medium">Dirección:</span> {reserva.direccionRecogida}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {reservasData.length === 0 && (
+                      <div className="p-6 text-center bg-white rounded-lg">
+                        <p className="text-gray-500">No tienes reservas pendientes</p>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Modal de Edición de Perfil */}
+      {isEditProfileModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <motion.div 
+            className="w-full max-w-md p-6 bg-white rounded-lg shadow-xl"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold">Editar Perfil</h3>
+              <button 
+                onClick={() => setIsEditProfileModalOpen(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleProfileUpdate}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block mb-1 text-sm font-medium text-gray-700">
+                    Nombre
+                  </label>
+                  <input
+                    type="text"
+                    value={editProfileForm.nombre}
+                    onChange={(e) => setEditProfileForm({...editProfileForm, nombre: e.target.value})}
+                    className="w-full p-2 border rounded-md"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block mb-1 text-sm font-medium text-gray-700">
+                    Apellido
+                  </label>
+                  <input
+                    type="text"
+                    value={editProfileForm.apellido}
+                    onChange={(e) => setEditProfileForm({...editProfileForm, apellido: e.target.value})}
+                    className="w-full p-2 border rounded-md"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block mb-1 text-sm font-medium text-gray-700">
+                    Dirección
+                  </label>
+                  <input
+                    type="text"
+                    value={editProfileForm.direccion}
+                    onChange={(e) => setEditProfileForm({...editProfileForm, direccion: e.target.value})}
+                    className="w-full p-2 border rounded-md"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block mb-1 text-sm font-medium text-gray-700">
+                    Teléfono
+                  </label>
+                  <input
+                    type="text"
+                    value={editProfileForm.telefono}
+                    onChange={(e) => setEditProfileForm({...editProfileForm, telefono: e.target.value})}
+                    className="w-full p-2 border rounded-md"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-4 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setIsEditProfileModalOpen(false)}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-white rounded-md bg-dog-green hover:bg-dog-light-green"
+                >
+                  Guardar Cambios
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
+    </>
+  );
+};
+
+export default PaseadorDashboard; 

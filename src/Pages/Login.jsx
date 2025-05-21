@@ -101,12 +101,19 @@ const Login = () => {
       // Usar la acción de login de Zustand
       await login(formData);
       
+      // Obtener el usuario del store después del login
+      const user = useAuthStore.getState().user;
+      
       // Indicar que estamos redirigiendo para evitar múltiples navegaciones
       setIsRedirecting(true);
       
-      // Usar un timeout pequeño para asegurar que el estado se actualice antes de la navegación
+      // Redirigir según el rol del usuario
       setTimeout(() => {
-        navigate('/dashboard', { replace: true });
+        if (user?.rol === 'Paseador') {
+          navigate('/paseador/dashboard', { replace: true });
+        } else {
+          navigate('/dashboard', { replace: true });
+        }
       }, 100);
     } catch (error) {
       console.error('Error de inicio de sesión:', error);

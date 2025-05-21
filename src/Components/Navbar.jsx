@@ -114,9 +114,13 @@ const Navbar = forwardRef((props, ref) => {
 
   // Ir al dashboard
   const goToDashboard = useCallback(() => {
-    navigate('/dashboard');
+    if (user?.rol === 'Paseador') {
+      navigate('/paseador/dashboard');
+    } else {
+      navigate('/dashboard');
+    }
     closeUserMenu();
-  }, [navigate, closeUserMenu]);
+  }, [navigate, closeUserMenu, user?.rol]);
   
   // Debug info - solo para desarrollo
   useEffect(() => {

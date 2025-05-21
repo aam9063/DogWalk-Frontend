@@ -10,6 +10,7 @@ import Contact from './Pages/Contact'
 import DSADisclosure from './Pages/DSADisclosure'
 import Login from './Pages/Login'
 import Dashboard from './Pages/Dashboard'
+import PaseadorDashboard from './Pages/PaseadorDashboard'
 import SearchCaregivers from './Pages/SearchCaregivers'
 import Shop from './Pages/Shop'
 import ProductDetail from './Pages/ProductDetail'
@@ -26,9 +27,10 @@ import { ToastContainer } from 'react-toastify'
 import './App.css'
 
 // Componente para proteger rutas
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const isAuthenticated = useAuthStore(state => state.isAuthenticated);
   const loading = useAuthStore(state => state.loading);
+  const user = useAuthStore(state => state.user);
   
   // Mientras se verifica la autenticación, mostrar un indicador de carga
   if (loading) {
@@ -46,8 +48,17 @@ const ProtectedRoute = ({ children }) => {
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
+
+  // Si hay roles permitidos especificados y el usuario no tiene el rol adecuado
+  if (allowedRoles.length > 0 && !allowedRoles.includes(user?.rol)) {
+    // Redirigir al dashboard correspondiente según el rol
+    if (user?.rol === 'Paseador') {
+      return <Navigate to="/paseador/dashboard" replace />;
+    }
+    return <Navigate to="/dashboard" replace />;
+  }
   
-  // Si está autenticado, mostrar los hijos (la página protegida)
+  // Si está autenticado y tiene el rol adecuado, mostrar los hijos (la página protegida)
   return children;
 }
 
@@ -83,8 +94,16 @@ function App() {
           <Route 
             path="/dashboard" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['Usuario']}>
                 <Dashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/paseador/dashboard" 
+            element={
+              <ProtectedRoute allowedRoles={['Paseador']}>
+                <PaseadorDashboard />
               </ProtectedRoute>
             } 
           />

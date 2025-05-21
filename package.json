@@ -28,6 +28,7 @@
     "react-toastify": "^11.0.5",
     "react-window": "^1.8.11",
     "react-window-infinite-loader": "^1.0.10",
+    "recharts": "^2.15.3",
     "swiper": "^11.2.6",
     "swr": "^2.3.3",
     "zustand": "^5.0.3"
