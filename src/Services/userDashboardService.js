@@ -117,5 +117,17 @@ export const deleteDog = async (id) => {
   }
 }; 
 
+// Obtener los perros del usuario actual
+export const getMisPerros = async () => {
+  try {
+    // No es necesario pasar el userId en la URL si el backend lo infiere del token
+    return await sendRequest('/api/Usuario/mis-perros', { method: 'GET' });
+  } catch (error) {
+    console.error('Error al obtener los perros del usuario:', error);
+    // Podrías devolver un array vacío o un objeto con error para manejarlo en el componente
+    throw new Error('No se pudieron cargar tus perros.');
+  }
+};
+
 
 

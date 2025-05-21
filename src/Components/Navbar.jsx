@@ -323,15 +323,9 @@ const Navbar = forwardRef((props, ref) => {
                       onClick={goToDashboard}
                       className="block w-full px-4 py-2 text-sm text-left text-gray-700 hover:bg-gray-100"
                     >
-                      Dashboard
-                    </button>
-                    <Link
-                      to="/perfil"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      onClick={closeUserMenu}
-                    >
                       Mi Perfil
-                    </Link>
+                    </button>
+                    
                     <button
                       onClick={handleLogout}
                       className="block w-full px-4 py-2 text-sm text-left text-red-600 hover:bg-gray-100"

@@ -468,16 +468,11 @@ const PaseadorDashboard = () => {
                     <div className="p-6">
                       <div className="flex items-center justify-between mb-8">
                         <div className="flex items-center">
-                          <img
-                            src={profileData?.foto || '/default-avatar.jpg'}
-                            alt="Foto de perfil"
-                            className="object-cover w-24 h-24 rounded-full"
-                          />
                           <div className="ml-6">
                             <h2 className="text-2xl font-bold text-gray-900">
                               {profileData?.nombre} {profileData?.apellido}
                             </h2>
-                            <p className="text-gray-600">Paseador Profesional</p>
+                            <p className="text-gray-600">Paseador</p>
                           </div>
                         </div>
                         <motion.button
@@ -494,33 +489,33 @@ const PaseadorDashboard = () => {
                         <div className="space-y-4">
                           <div className="flex items-center">
                             <FaUser className="w-5 h-5 text-dog-green" />
-                            <span className="ml-3">Nombre: {profileData?.nombre}</span>
+                            <span className="ml-3"><strong>Nombre:</strong> {profileData?.nombre}</span>
                           </div>
                           <div className="flex items-center">
                             <FaUser className="w-5 h-5 text-dog-green" />
-                            <span className="ml-3">Apellido: {profileData?.apellido}</span>
+                            <span className="ml-3"><strong>Apellido:</strong> {profileData?.apellido}</span>
                           </div>
                           <div className="flex items-center">
                             <FaMapMarkerAlt className="w-5 h-5 text-dog-green" />
-                            <span className="ml-3">Dirección: {profileData?.direccion}</span>
+                            <span className="ml-3"><strong>Dirección:</strong> {profileData?.direccion}</span>
                           </div>
                           <div className="flex items-center">
                             <FaPhone className="w-5 h-5 text-dog-green" />
-                            <span className="ml-3">Teléfono: {profileData?.telefono}</span>
+                            <span className="ml-3"><strong>Teléfono:</strong> {profileData?.telefono}</span>
                           </div>
                         </div>
                         <div className="space-y-4">
                           <div className="flex items-center">
                             <FaStar className="w-5 h-5 text-dog-green" />
-                            <span className="ml-3">Valoración: {profileData?.valoracionPromedio}/5</span>
+                            <span className="ml-3"><strong>Valoración:</strong> {profileData?.valoracionPromedio}/5</span>
                           </div>
                           <div className="flex items-center">
                             <FaUsers className="w-5 h-5 text-dog-green" />
-                            <span className="ml-3">{profileData?.cantidadValoraciones} valoraciones</span>
+                            <span className="ml-3"><strong>Valoraciones:</strong> {profileData?.cantidadValoraciones}</span>
                           </div>
                           <div className="flex items-center">
                             <FaMapMarkerAlt className="w-5 h-5 text-dog-green" />
-                            <span className="ml-3">Radio de servicio: {profileData?.radioServicio} km</span>
+                            <span className="ml-3"><strong>Radio de servicio:</strong> {profileData?.radioServicio} km</span>
                           </div>
                         </div>
                       </div>
@@ -583,19 +578,19 @@ const PaseadorDashboard = () => {
                         </div>
                         <div className="grid grid-cols-1 gap-4 text-sm text-gray-600 md:grid-cols-2">
                           <div>
-                            <p><span className="font-medium">Cliente:</span> {reserva.nombreUsuario}</p>
-                            <p><span className="font-medium">Servicio:</span> {reserva.nombreServicio}</p>
+                            <p><span className="font-medium"><strong>Cliente:</strong></span> {reserva.nombreUsuario}</p>
+                            <p><span className="font-medium"><strong>Servicio:</strong></span> {reserva.nombreServicio}</p>
                           </div>
                           <div>
-                            <p><span className="font-medium">Fecha:</span> {new Date(reserva.fechaReserva).toLocaleDateString()}</p>
-                            <p><span className="font-medium">Dirección:</span> {reserva.direccionRecogida}</p>
+                            <p><span className="font-medium"><strong>Fecha:</strong></span> {new Date(reserva.fechaReserva).toLocaleDateString()}</p>
+                            <p><span className="font-medium"><strong>Dirección:</strong></span> {reserva.direccionRecogida}</p>
                           </div>
                         </div>
                       </div>
                     ))}
                     {reservasData.length === 0 && (
                       <div className="p-6 text-center bg-white rounded-lg">
-                        <p className="text-gray-500">No tienes reservas pendientes</p>
+                        <p className="text-gray-500"><strong>No tienes reservas pendientes</strong></p>
                       </div>
                     )}
                   </div>

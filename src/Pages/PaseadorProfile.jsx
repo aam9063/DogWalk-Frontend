@@ -1,11 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { FaMapMarkerAlt, FaStar, FaPhone, FaEnvelope, FaUser } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaStar, FaPhone, FaEnvelope, FaUser, FaTimes, FaDog, FaConciergeBell, FaCalendarAlt, FaStickyNote, FaMapMarkedAlt } from 'react-icons/fa';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import Navbar from '../Components/Navbar';
 import Footer from '../Components/Footer';
 import paseadorProfileService from '../Services/paseadorProfileService';
+import reservaService from '../Services/reservaService';
+import { getDogsList } from '../Services/userDashboardService';
+import useAuthStore from '../store/authStore';
+import { toast } from 'react-toastify';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 if (!MAPBOX_TOKEN) {
@@ -23,8 +27,24 @@ const PaseadorProfile = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [disponibilidad, setDisponibilidad] = useState(null);
+  const [disponibilidad, setDisponibilidad] = useState([]);
   const [loadingDisponibilidad, setLoadingDisponibilidad] = useState(false);
+
+  // Estados para el modal de reserva
+  const [isReservaModalOpen, setIsReservaModalOpen] = useState(false);
+  const [misPerros, setMisPerros] = useState([]);
+  const [loadingMisPerros, setLoadingMisPerros] = useState(false);
+  const [selectedPerroId, setSelectedPerroId] = useState('');
+  const [selectedServicioId, setSelectedServicioId] = useState('');
+  const [selectedFechaHora, setSelectedFechaHora] = useState(null);
+  const [direccionRecogida, setDireccionRecogida] = useState('');
+  const [direccionEntrega, setDireccionEntrega] = useState('');
+  const [notasReserva, setNotasReserva] = useState('');
+  const [loadingReserva, setLoadingReserva] = useState(false);
+  const [reservaError, setReservaError] = useState(null);
+  
+  // Obtener el usuario logueado para la reserva
+  const currentUser = useAuthStore(state => state.user);
 
   // Referencias para el scroll y el mapa
   const aboutRef = useRef(null);
@@ -37,7 +57,9 @@ const PaseadorProfile = () => {
   const [markers, setMarkers] = useState([]);
 
   const loadProfileData = useCallback(async () => {
+    console.log('Iniciando carga de perfil...', { paseadorId });
     if (!paseadorId) {
+      console.error('ID de paseador no válido');
       setError('ID de paseador no válido');
       setLoading(false);
       return;
@@ -46,19 +68,25 @@ const PaseadorProfile = () => {
     try {
       setLoading(true);
       setError(null);
+      console.log('Cargando datos...');
 
-      const profileData = await paseadorProfileService.getProfile(paseadorId);
-      
+      const [profileData, rankingData, valoracionesData] = await Promise.all([
+        paseadorProfileService.getProfile(paseadorId),
+        paseadorProfileService.getRankingResumen(paseadorId),
+        paseadorProfileService.getValoraciones(paseadorId)
+      ]);
+
+      console.log('Datos cargados:', { profileData, rankingData, valoracionesData });
+
       if (!profileData) {
         throw new Error('No se pudo cargar el perfil del paseador');
       }
 
-      
       // Verificar y procesar las coordenadas
       if (profileData.coordenadas && 
           typeof profileData.coordenadas.latitud === 'number' && 
           typeof profileData.coordenadas.longitud === 'number') {
-        console.log('Coordenadas válidas encontradas:', profileData.coordenadas);
+        console.log('Coordenadas válidas:', profileData.coordenadas);
         setProfile({
           ...profileData,
           coordenadas: {
@@ -67,23 +95,19 @@ const PaseadorProfile = () => {
           }
         });
       } else {
-        console.warn('El perfil no contiene coordenadas válidas:', profileData.coordenadas);
+        console.log('Sin coordenadas válidas');
         setProfile(profileData);
       }
 
-      // Cargar el resto de los datos
-      const [rankingData, valoracionesData] = await Promise.all([
-        paseadorProfileService.getRankingResumen(paseadorId),
-        paseadorProfileService.getValoraciones(paseadorId)
-      ]);
-
       setRanking(rankingData);
       setValoraciones(valoracionesData || []);
+      console.log('Estados actualizados correctamente');
     } catch (err) {
-      console.error('Error cargando datos del perfil:', err);
+      console.error('Error detallado:', err);
       setError('Error al cargar la información del paseador');
     } finally {
       setLoading(false);
+      console.log('Carga finalizada');
     }
   }, [paseadorId]);
 
@@ -219,41 +243,39 @@ const PaseadorProfile = () => {
     { name: 'Valoraciones', ref: valoracionesRef }
   ], []);
 
-  // Función para cargar la disponibilidad de una fecha específica
-  const cargarDisponibilidad = useCallback(async (fecha) => {
-    if (!paseadorId) return;
-    
-    setLoadingDisponibilidad(true);
-    try {
-      const fechaFormateada = fecha.toISOString().split('T')[0];
-      const data = await paseadorProfileService.getDisponibilidad(paseadorId, fechaFormateada);
-      
-      // Procesar la respuesta para adaptarla al formato esperado
-      if (data && data.dias && Array.isArray(data.dias)) {
-        const horasDisponibles = data.dias.flatMap(dia => 
-          dia.horas.map(hora => ({
-            id: hora.id,
-            horaInicio: hora.fechaHora.split('T')[1],
-            horaFin: new Date(new Date(hora.fechaHora).getTime() + 3600000).toISOString().split('T')[1],
-            estado: hora.estado
-          }))
-        );
-        setDisponibilidad(horasDisponibles);
-      } else {
-        setDisponibilidad([]);
-      }
-    } catch (error) {
-      console.error('Error al cargar disponibilidad:', error);
-      setDisponibilidad([]);
-    } finally {
-      setLoadingDisponibilidad(false);
-    }
-  }, [paseadorId]);
-
   // Cargar disponibilidad cuando cambie la fecha seleccionada
   useEffect(() => {
-    cargarDisponibilidad(selectedDate);
-  }, [selectedDate, cargarDisponibilidad]);
+    const cargarDisponibilidad = async () => {
+      if (!paseadorId) return;
+      
+      setLoadingDisponibilidad(true);
+      try {
+        const fechaFormateada = selectedDate.toISOString().split('T')[0];
+        const data = await paseadorProfileService.getDisponibilidad(paseadorId, fechaFormateada);
+        
+        if (data && data.dias && Array.isArray(data.dias)) {
+          const horasDisponibles = data.dias.flatMap(dia => 
+            dia.horas.map(hora => ({
+              id: hora.id,
+              horaInicio: hora.fechaHora.split('T')[1],
+              horaFin: new Date(new Date(hora.fechaHora).getTime() + 3600000).toISOString().split('T')[1],
+              estado: hora.estado
+            }))
+          );
+          setDisponibilidad(horasDisponibles);
+        } else {
+          setDisponibilidad([]);
+        }
+      } catch (error) {
+        console.error('Error al cargar disponibilidad:', error);
+        setDisponibilidad([]);
+      } finally {
+        setLoadingDisponibilidad(false);
+      }
+    };
+
+    cargarDisponibilidad();
+  }, [paseadorId, selectedDate]);
 
   // Generar días del mes actual
   const diasDelMes = useMemo(() => {
@@ -307,13 +329,126 @@ const PaseadorProfile = () => {
     );
   };
 
+  // Funciones para el modal de reserva
+  const handleOpenReservaModal = async () => {
+    if (!currentUser || !currentUser.userId) {
+      toast.error('Debes iniciar sesión para realizar una reserva.');
+      // Opcionalmente, redirigir al login
+      // navigate('/login'); 
+      return;
+    }
+    setReservaError(null);
+    setSelectedPerroId('');
+    setSelectedServicioId('');
+    setSelectedFechaHora(null);
+    setDireccionRecogida(profile?.direccion || ''); // Pre-rellenar con la dirección del paseador como sugerencia
+    setDireccionEntrega(profile?.direccion || '');
+    setNotasReserva('');
+
+    setIsReservaModalOpen(true);
+    setLoadingMisPerros(true);
+    try {
+      const perrosData = await getDogsList(); // Cambiado aquí
+      setMisPerros(perrosData || []);
+    } catch (error) {
+      console.error('Error al cargar los perros:', error);
+      toast.error(error.message || 'Error al cargar tus perros.');
+      setMisPerros([]);
+    } finally {
+      setLoadingMisPerros(false);
+    }
+  };
+
+  const handleCloseReservaModal = () => {
+    setIsReservaModalOpen(false);
+  };
+
+  const handleConfirmarReserva = async () => {
+    setReservaError(null);
+
+    // Validaciones básicas
+    if (!selectedPerroId || !selectedServicioId || !selectedFechaHora || !direccionRecogida.trim() || !direccionEntrega.trim()) {
+      toast.error('Por favor, completa todos los campos obligatorios.');
+      return;
+    }
+
+    try {
+      // Construir la fecha del servicio con el formato correcto
+      const [hours, minutes] = selectedFechaHora.horaInicio.split(':');
+      const fechaServicioDate = new Date(selectedDate);
+      
+      // Establecer la hora y minutos
+      fechaServicioDate.setHours(parseInt(hours));
+      fechaServicioDate.setMinutes(parseInt(minutes));
+      fechaServicioDate.setSeconds(5); // Establecemos segundos fijos
+      fechaServicioDate.setMilliseconds(941); // Establecemos milisegundos fijos
+      
+      // Asegurarnos de que la fecha está en el formato correcto
+      const fechaISO = fechaServicioDate.toISOString().replace('Z', '0000');
+      
+      console.log('Fecha construida:', {
+        original: selectedDate,
+        horaInicio: selectedFechaHora.horaInicio,
+        fechaFinal: fechaServicioDate,
+        fechaISO: fechaISO
+      });
+      
+      if (isNaN(fechaServicioDate.getTime())) {
+        throw new Error('Fecha y hora inválidas');
+      }
+
+      const reservaData = {
+        paseadorId: paseadorId,
+        perroId: selectedPerroId,
+        servicioId: selectedServicioId,
+        fechaServicio: fechaISO,
+        direccionRecogida: direccionRecogida.trim(),
+        direccionEntrega: direccionEntrega.trim(),
+        notas: notasReserva.trim() || null
+      };
+
+      // Log detallado de los datos de la reserva
+      console.log('Datos de la reserva a enviar:', reservaData);
+
+      setLoadingReserva(true);
+      await reservaService.crearReserva(reservaData);
+      
+      toast.success('¡Reserva creada con éxito!');
+      handleCloseReservaModal();
+      
+      // Actualizar disponibilidad
+      const fechaFormateada = selectedDate.toISOString().split('T')[0];
+      const nuevaDisponibilidad = await paseadorProfileService.getDisponibilidad(paseadorId, fechaFormateada);
+      if (nuevaDisponibilidad && nuevaDisponibilidad.dias) {
+        const horasDisponibles = nuevaDisponibilidad.dias.flatMap(dia => 
+          dia.horas.map(hora => ({
+            id: hora.id,
+            horaInicio: hora.fechaHora.split('T')[1],
+            horaFin: new Date(new Date(hora.fechaHora).getTime() + 3600000).toISOString().split('T')[1],
+            estado: hora.estado
+          }))
+        );
+        setDisponibilidad(horasDisponibles);
+      }
+    } catch (error) {
+      console.error('Error detallado al crear reserva:', error);
+      toast.error(error.message || 'Error al crear la reserva. Por favor, verifica los datos.');
+      setReservaError(error.message);
+    } finally {
+      setLoadingReserva(false);
+    }
+  };
+
   // Renderizar estado de carga
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-white">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 rounded-full border-t-dog-green border-r-dog-green border-b-transparent border-l-transparent animate-spin"></div>
-          <p className="mt-4 text-gray-600">Cargando perfil del paseador...</p>
+      <div className="min-h-screen bg-white">
+        <Navbar />
+        <div className="flex items-center justify-center flex-1 p-8">
+          <div className="text-center">
+            <div className="w-16 h-16 mx-auto mb-4 border-4 rounded-full border-t-dog-green border-r-dog-green border-b-transparent border-l-transparent animate-spin"></div>
+            <p className="text-xl text-gray-600">Cargando perfil del paseador...</p>
+          </div>
         </div>
       </div>
     );
@@ -322,15 +457,18 @@ const PaseadorProfile = () => {
   // Renderizar estado de error
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-white">
-        <div className="p-4 text-center">
-          <p className="mb-4 text-xl text-red-600">{error}</p>
-          <button
-            onClick={loadProfileData}
-            className="px-4 py-2 text-white transition rounded-md bg-dog-green hover:bg-dog-light-green"
-          >
-            Intentar nuevamente
-          </button>
+      <div className="min-h-screen bg-white">
+        <Navbar />
+        <div className="flex items-center justify-center flex-1 p-8">
+          <div className="max-w-md p-6 text-center bg-white rounded-lg shadow-lg">
+            <p className="mb-4 text-xl text-red-600">{error}</p>
+            <button
+              onClick={loadProfileData}
+              className="px-4 py-2 text-white transition rounded-md bg-dog-green hover:bg-dog-light-green"
+            >
+              Intentar nuevamente
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -339,9 +477,12 @@ const PaseadorProfile = () => {
   // Renderizar estado sin datos
   if (!profile) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-white">
-        <div className="p-4 text-center text-gray-600">
-          No se encontró el perfil del paseador
+      <div className="min-h-screen bg-white">
+        <Navbar />
+        <div className="flex items-center justify-center flex-1 p-8">
+          <div className="p-4 text-center text-gray-600">
+            No se encontró el perfil del paseador
+          </div>
         </div>
       </div>
     );
@@ -352,7 +493,7 @@ const PaseadorProfile = () => {
       <Navbar />
       
       {/* Header con información principal */}
-      <div className="bg-white shadow">
+      <div className="w-full bg-white shadow">
         <div className="container px-4 py-8 mx-auto max-w-7xl">
           <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
             {/* Columna izquierda - Foto y datos básicos */}
@@ -372,37 +513,39 @@ const PaseadorProfile = () => {
               <h1 className="mb-2 text-2xl font-bold">
                 {profile.nombre} {profile.apellido}
               </h1>
-              <div className="flex items-center justify-center mb-4">
-                <FaMapMarkerAlt className="mr-2 text-dog-green" />
-                <span className="text-gray-600">{profile.direccion}</span>
-              </div>
-              <div className="flex justify-center mb-4">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <FaStar 
-                    key={star}
-                    className={`w-6 h-6 ${
-                      star <= (ranking?.promedioValoracion || 0)
-                        ? 'text-yellow-400' 
-                        : 'text-gray-300'
-                    }`}
-                  />
-                ))}
-              </div>
+              {profile.direccion && (
+                <div className="flex items-center justify-center mb-4">
+                  <FaMapMarkerAlt className="mr-2 text-dog-green" />
+                  <span className="text-gray-600">{profile.direccion}</span>
+                </div>
+              )}
+              {ranking && (
+                <div className="flex justify-center mb-4">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <FaStar 
+                      key={star}
+                      className={`w-6 h-6 ${
+                        star <= (ranking.promedioValoracion || 0)
+                          ? 'text-yellow-400' 
+                          : 'text-gray-300'
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Columna central - Estadísticas */}
             <div className="grid grid-cols-1 gap-4">
               <div className="p-4 bg-white rounded-lg shadow">
                 <h3 className="text-sm text-gray-500">Valoración media</h3>
-                <p className="text-xl font-semibold">{ranking?.promedioValoracion?.toFixed(1) || 'N/A'}</p>
+                <p className="text-xl font-semibold">
+                  {ranking?.promedioValoracion?.toFixed(1) || 'N/A'}
+                </p>
               </div>
               <div className="p-4 bg-white rounded-lg shadow">
                 <h3 className="text-sm text-gray-500">Total reseñas</h3>
                 <p className="text-xl font-semibold">{ranking?.cantidadValoraciones || 0}</p>
-              </div>
-              <div className="p-4 bg-white rounded-lg shadow">
-                <h3 className="text-sm text-gray-500">Servicios completados</h3>
-                <p className="text-xl font-semibold">{profile.serviciosCompletados || 0}</p>
               </div>
             </div>
 
@@ -410,7 +553,7 @@ const PaseadorProfile = () => {
             <div className="flex flex-col gap-4">
               <button 
                 className="px-6 py-3 text-white transition rounded-md bg-dog-green hover:bg-dog-light-green"
-                onClick={() => {/* Implementar modal de reserva */}}
+                onClick={handleOpenReservaModal}
               >
                 Contratar Reserva
               </button>
@@ -450,7 +593,7 @@ const PaseadorProfile = () => {
       </nav>
 
       {/* Contenido principal */}
-      <div className="container px-4 py-8 mx-auto max-w-7xl">
+      <main className="container px-4 py-8 mx-auto max-w-7xl">
         {/* Sobre mí */}
         <section ref={aboutRef} className="mb-12">
           <h2 className="mb-4 text-2xl font-bold">Sobre mí</h2>
@@ -621,9 +764,217 @@ const PaseadorProfile = () => {
             ))}
           </div>
         </section>
-      </div>
+      </main>
 
       <Footer />
+
+      {/* Modal de Reserva */}
+      {isReservaModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+          <div className="w-full max-w-2xl p-6 overflow-hidden bg-white rounded-lg shadow-xl max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between pb-4 mb-4 border-b">
+              <h2 className="text-2xl font-semibold text-gray-800">Contratar Reserva</h2>
+              <button 
+                onClick={handleCloseReservaModal}
+                className="text-gray-500 transition hover:text-gray-700"
+              >
+                <FaTimes size={24} />
+              </button>
+            </div>
+
+            {reservaError && (
+              <div className="p-3 mb-4 text-red-700 bg-red-100 border border-red-400 rounded-md">
+                {reservaError}
+              </div>
+            )}
+
+            <div className="flex-grow overflow-y-auto">
+              {/* Selección de Perro */}
+              <div className="mb-4">
+                <label htmlFor="perroReserva" className="block mb-2 text-sm font-medium text-gray-700">
+                  <FaDog className="inline mr-2 mb-0.5" />Selecciona tu perro:
+                </label>
+                {loadingMisPerros ? (
+                  <p className="text-sm text-gray-500">Cargando tus perros...</p>
+                ) : misPerros.length > 0 ? (
+                  <select
+                    id="perroReserva"
+                    value={selectedPerroId}
+                    onChange={(e) => setSelectedPerroId(e.target.value)}
+                    className="block w-full p-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-dog-green focus:border-dog-green"
+                  >
+                    <option value="">-- Elige un perro --</option>
+                    {misPerros.map(perro => (
+                      <option key={perro.id} value={perro.id}>{perro.nombre}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <p className="text-sm text-red-600">
+                    No tienes perros registrados. Por favor, añade uno desde tu dashboard.
+                  </p>
+                )}
+              </div>
+
+              {/* Selección de Servicio */}
+              <div className="mb-4">
+                <label htmlFor="servicioReserva" className="block mb-2 text-sm font-medium text-gray-700">
+                  <FaConciergeBell className="inline mr-2 mb-0.5" />Selecciona el servicio:
+                </label>
+                {profile?.servicios && profile.servicios.length > 0 ? (
+                  <select
+                    id="servicioReserva"
+                    value={selectedServicioId}
+                    onChange={(e) => setSelectedServicioId(e.target.value)}
+                    className="block w-full p-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-dog-green focus:border-dog-green"
+                  >
+                    <option value="">-- Elige un servicio --</option>
+                    {profile.servicios.map(servicio => (
+                      <option key={servicio.id} value={servicio.id}>
+                        {servicio.nombre} ({new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(servicio.precio)}/hora)
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <p className="text-sm text-gray-500">Este paseador no tiene servicios configurados.</p>
+                )}
+              </div>
+
+              {/* Selección de Fecha y Hora */}
+              <div className="mb-4">
+                <label className="block mb-2 text-sm font-medium text-gray-700">
+                  <FaCalendarAlt className="inline mr-2 mb-0.5" />Selecciona fecha y hora:
+                </label>
+                {/* Calendario similar al de disponibilidad */}
+                <div className="p-4 border rounded-lg bg-gray-50">
+                  <div className="flex items-center justify-between mb-4">
+                    <button onClick={() => cambiarMes(-1)} className="p-2 text-gray-600 transition hover:text-dog-green">&lt; Mes ant.</button>
+                    <h3 className="font-semibold text-md">
+                      {selectedDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+                    </h3>
+                    <button onClick={() => cambiarMes(1)} className="p-2 text-gray-600 transition hover:text-dog-green">Mes sig. &gt;</button>
+                  </div>
+                  <div className="grid grid-cols-7 mb-1 text-xs font-semibold text-center text-gray-500">
+                    {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(dia => (<div key={dia} className="p-1">{dia}</div>))}
+                  </div>
+                  <div className="grid grid-cols-7 gap-1">
+                    {Array(diasDelMes[0].getDay()).fill(null).map((_, index) => (<div key={`empty-modal-${index}`} className="p-1" />))}
+                    {diasDelMes.map(dia => {
+                      const esHoy = new Date().toDateString() === dia.toDateString();
+                      const seleccionado = selectedDate.toDateString() === dia.toDateString();
+                      return (
+                        <button
+                          key={dia.getTime()}
+                          onClick={() => {
+                            setSelectedDate(dia); // Actualiza la fecha para el calendario del modal
+                            setSelectedFechaHora(null); // Resetea la hora seleccionada al cambiar de día
+                          }}
+                          className={`p-1.5 text-xs text-center rounded-md transition ${seleccionado ? 'bg-dog-green text-white' : esHoy ? 'bg-dog-light-green text-dog-green' : 'hover:bg-gray-200'}`}
+                        >
+                          {dia.getDate()}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Selector de Hora Disponible */}
+                <div className="mt-4">
+                  {loadingDisponibilidad ? (
+                    <p className="text-sm text-gray-500">Cargando horarios...</p>
+                  ) : Array.isArray(disponibilidad) && disponibilidad.length > 0 ? (
+                    <select
+                      value={selectedFechaHora ? selectedFechaHora.id : ''} // Usar el ID del slot de disponibilidad
+                      onChange={(e) => {
+                        const slotId = e.target.value;
+                        const slotSeleccionado = disponibilidad.find(s => s.id.toString() === slotId);
+                        setSelectedFechaHora(slotSeleccionado);
+                      }}
+                      className={`block w-full p-2.5 text-sm text-gray-900 border rounded-lg bg-gray-50 focus:ring-dog-green focus:border-dog-green ${!selectedFechaHora && selectedPerroId && selectedServicioId ? 'border-red-500' : 'border-gray-300'}`}
+                    >
+                      <option value="">-- Elige una hora --</option>
+                      {disponibilidad.map((slot) => (
+                        <option key={slot.id} value={slot.id} disabled={slot.estado !== 'Disponible'}>
+                          {formatearHora(slot.horaInicio)} - {formatearHora(slot.horaFin)}
+                          {slot.estado !== 'Disponible' ? ` (${slot.estado})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <p className="mt-2 text-sm text-center text-gray-500">No hay horarios disponibles para el {selectedDate.toLocaleDateString('es-ES', { day: 'numeric', month:'long' })}.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Dirección de Recogida */}
+              <div className="mb-4">
+                <label htmlFor="direccionRecogida" className="block mb-2 text-sm font-medium text-gray-700">
+                  <FaMapMarkedAlt className="inline mr-2 mb-0.5" />Dirección de Recogida:
+                </label>
+                <input 
+                  type="text"
+                  id="direccionRecogida"
+                  value={direccionRecogida}
+                  onChange={(e) => setDireccionRecogida(e.target.value)}
+                  className="block w-full p-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-dog-green focus:border-dog-green"
+                  placeholder="Ej: Calle Falsa 123, Ciudad"
+                />
+              </div>
+
+              {/* Dirección de Entrega */}
+              <div className="mb-4">
+                <label htmlFor="direccionEntrega" className="block mb-2 text-sm font-medium text-gray-700">
+                  <FaMapMarkedAlt className="inline mr-2 mb-0.5" />Dirección de Entrega:
+                </label>
+                <input 
+                  type="text"
+                  id="direccionEntrega"
+                  value={direccionEntrega}
+                  onChange={(e) => setDireccionEntrega(e.target.value)}
+                  className="block w-full p-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-dog-green focus:border-dog-green"
+                  placeholder="Ej: Parque Central (misma que recogida si aplica)"
+                />
+              </div>
+
+              {/* Notas Adicionales */}
+              <div className="mb-6">
+                <label htmlFor="notasReserva" className="block mb-2 text-sm font-medium text-gray-700">
+                  <FaStickyNote className="inline mr-2 mb-0.5" />Notas Adicionales (opcional):
+                </label>
+                <textarea 
+                  id="notasReserva"
+                  rows="3"
+                  value={notasReserva}
+                  onChange={(e) => setNotasReserva(e.target.value)}
+                  className="block w-full p-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-dog-green focus:border-dog-green"
+                  placeholder="Alergias, comportamiento especial, etc."
+                />
+              </div>
+            </div>
+
+            {/* Botones de Acción del Modal */}
+            <div className="pt-4 mt-auto border-t">
+              <div className="flex justify-end gap-3">
+                <button 
+                  type="button"
+                  onClick={handleCloseReservaModal}
+                  disabled={loadingReserva}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-dog-light-green disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="button"
+                  onClick={handleConfirmarReserva}
+                  disabled={loadingReserva || !selectedPerroId || !selectedServicioId || !selectedFechaHora || !direccionRecogida || !direccionEntrega}
+                  className="px-4 py-2 text-sm font-medium text-white transition rounded-md bg-dog-green hover:bg-dog-light-green focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-dog-green disabled:opacity-50"
+                >
+                  {loadingReserva ? 'Procesando...' : 'Confirmar Reserva'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
