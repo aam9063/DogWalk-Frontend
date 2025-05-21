@@ -318,21 +318,7 @@ const Navbar = forwardRef((props, ref) => {
                 </button>
                 
                 {isUserMenuOpen && (
-                  <div className="absolute right-0 z-20 w-48 py-2 mt-2 bg-white rounded-md shadow-lg">
-                    <button
-                      onClick={goToDashboard}
-                      className="block w-full px-4 py-2 text-sm text-left text-gray-700 hover:bg-gray-100"
-                    >
-                      Mi Perfil
-                    </button>
-                    
-                    <button
-                      onClick={handleLogout}
-                      className="block w-full px-4 py-2 text-sm text-left text-red-600 hover:bg-gray-100"
-                    >
-                      Cerrar Sesión
-                    </button>
-                  </div>
+                                    <div className="absolute right-0 z-20 w-48 py-2 mt-2 bg-white rounded-md shadow-lg">                    <button                      onClick={goToDashboard}                      className="block w-full px-4 py-2 text-sm text-left text-gray-700 hover:bg-gray-100"                    >                      Mi Perfil                    </button>                                        <Link                      to="/mensajes"                      onClick={closeUserMenu}                      className="block w-full px-4 py-2 text-sm text-left text-gray-700 hover:bg-gray-100"                    >                      Mensajes                    </Link>                                        <button                      onClick={handleLogout}                      className="block w-full px-4 py-2 text-sm text-left text-red-600 hover:bg-gray-100"                    >                      Cerrar Sesión                    </button>                  </div>
                 )}
               </div>
             ) : (
@@ -412,16 +398,7 @@ const Navbar = forwardRef((props, ref) => {
               </div>
               
               {/* Enlaces de navegación */}
-              <div className="flex flex-col space-y-4">
-                {isAuthenticated && user && (
-                  <Link 
-                    to="/dashboard" 
-                    className="py-2 font-bold text-gray-700 border-b border-gray-100 hover:text-dog-green"
-                    onClick={closeMobileMenu}
-                  >
-                    Dashboard
-                  </Link>
-                )}
+                            <div className="flex flex-col space-y-4">                {isAuthenticated && user && (                  <>                    <Link                       to="/dashboard"                       className="py-2 font-bold text-gray-700 border-b border-gray-100 hover:text-dog-green"                      onClick={closeMobileMenu}                    >                      Dashboard                    </Link>                    <Link                       to="/mensajes"                       className="py-2 font-bold text-gray-700 border-b border-gray-100 hover:text-dog-green"                      onClick={closeMobileMenu}                    >                      Mensajes                    </Link>                  </>                )}
                 <Link 
                   to="/buscar-cuidadores" 
                   className="py-2 font-bold text-gray-700 border-b border-gray-100 hover:text-dog-green"

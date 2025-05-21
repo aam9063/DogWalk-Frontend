@@ -21,6 +21,7 @@ import useAuthStore from './store/authStore'
 import useInitAuth from './hooks/useInitAuth'
 import CheckoutSuccess from './Pages/CheckoutSuccess'
 import PaseadorProfile from './Pages/PaseadorProfile'
+import MessagesPage from './Pages/MessagesPage'
 import { startAutoRefresh, stopAutoRefresh } from './Services/autoRefreshService'
 import { useEffect } from 'react'
 import { ToastContainer } from 'react-toastify'
@@ -45,20 +46,19 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   }
   
   // Si no está autenticado, redirigir al login
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !user) {
     return <Navigate to="/login" replace />;
   }
 
-  // Si hay roles permitidos especificados y el usuario no tiene el rol adecuado
-  if (allowedRoles.length > 0 && !allowedRoles.includes(user?.rol)) {
+  // Solo verificar roles si se especificaron roles permitidos
+  if (allowedRoles.length > 0 && !allowedRoles.includes(user.rol)) {
     // Redirigir al dashboard correspondiente según el rol
-    if (user?.rol === 'Paseador') {
-      return <Navigate to="/paseador/dashboard" replace />;
-    }
-    return <Navigate to="/dashboard" replace />;
+    return user.rol === 'Paseador' 
+      ? <Navigate to="/paseador/dashboard" replace />
+      : <Navigate to="/dashboard" replace />;
   }
   
-  // Si está autenticado y tiene el rol adecuado, mostrar los hijos (la página protegida)
+  // Si está autenticado y tiene el rol adecuado (o no se requieren roles), mostrar los hijos
   return children;
 }
 
@@ -104,6 +104,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['Paseador']}>
                 <PaseadorDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/mensajes" 
+            element={
+              <ProtectedRoute>
+                <MessagesPage />
               </ProtectedRoute>
             } 
           />

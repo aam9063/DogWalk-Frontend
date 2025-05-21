@@ -588,11 +588,11 @@ const SearchCaregivers = () => {
                           <div className="flex-shrink-0">
                             <Link to={`/paseador/${cuidador.id}`}>
                               {cuidador.foto ? (
-                                <img 
+                              <img 
                                   src={cuidador.foto} 
-                                  alt={`${cuidador.nombre} ${cuidador.apellido}`} 
-                                  className="object-cover w-16 h-16 rounded-full"
-                                />
+                                alt={`${cuidador.nombre} ${cuidador.apellido}`} 
+                                className="object-cover w-16 h-16 rounded-full"
+                              />
                               ) : (
                                 <div className="flex items-center justify-center w-16 h-16 text-white rounded-full bg-dog-green">
                                   <FaUser size={24} />
@@ -620,7 +620,7 @@ const SearchCaregivers = () => {
                               <div className="flex">
                                 {[1, 2, 3, 4, 5].map((star) => (
                                   <FaStar 
-                                    key={star}
+                                    key={star} 
                                     className={`w-4 h-4 ${
                                       star <= (valoraciones[cuidador.id]?.promedio || 0)
                                         ? 'text-yellow-400' 

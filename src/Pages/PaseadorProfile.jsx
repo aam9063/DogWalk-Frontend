@@ -10,6 +10,7 @@ import reservaService from '../Services/reservaService';
 import { getDogsList } from '../Services/userDashboardService';
 import useAuthStore from '../store/authStore';
 import { toast } from 'react-toastify';
+import ChatModal from '../Components/ChatModal';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 if (!MAPBOX_TOKEN) {
@@ -55,6 +56,8 @@ const PaseadorProfile = () => {
   const mapContainer = useRef(null);
   const [map, setMap] = useState(null);
   const [markers, setMarkers] = useState([]);
+
+  const [isChatModalOpen, setIsChatModalOpen] = useState(false);
 
   const loadProfileData = useCallback(async () => {
     console.log('Iniciando carga de perfil...', { paseadorId });
@@ -559,7 +562,7 @@ const PaseadorProfile = () => {
               </button>
               <button 
                 className="px-6 py-3 transition bg-white border rounded-md text-dog-green border-dog-green hover:bg-gray-50"
-                onClick={() => {/* Implementar inicio de chat */}}
+                onClick={() => setIsChatModalOpen(true)}
               >
                 Iniciar Chat
               </button>
@@ -975,6 +978,14 @@ const PaseadorProfile = () => {
           </div>
         </div>
       )}
+
+      <ChatModal
+        isOpen={isChatModalOpen}
+        onClose={() => setIsChatModalOpen(false)}
+        recipientId={paseadorId}
+        recipientName={`${profile?.nombre} ${profile?.apellido}`}
+        recipientType="Paseador"
+      />
     </div>
   );
 };
