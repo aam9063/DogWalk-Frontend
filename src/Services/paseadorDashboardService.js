@@ -6,6 +6,12 @@ export const getPaseadorDashboard = async () => {
     const response = await sendRequest('/api/Paseador/dashboard', {
       method: 'GET'
     });
+    
+    // Asegurarse de que la valoración promedio tenga un decimal
+    if (response && typeof response.valoracionPromedio === 'number') {
+      response.valoracionPromedio = Number(response.valoracionPromedio).toFixed(1);
+    }
+    
     return response;
   } catch (error) {
     console.error('Error al obtener el dashboard del paseador:', error);
@@ -16,11 +22,26 @@ export const getPaseadorDashboard = async () => {
 // Obtener el perfil privado del paseador
 export const getPaseadorProfile = async () => {
   try {
-    const response = await sendRequest('/api/Paseador/profile', {
+    // Obtener el perfil básico
+    const profileResponse = await sendRequest('/api/Paseador/profile', {
       method: 'GET'
     });
-    console.log('%c Datos actuales del perfil:', 'color: purple; font-weight: bold', response);
-    return response;
+
+    // Obtener las valoraciones
+    const valoracionesResponse = await sendRequest(`/api/RankingPaseador/paseador/${profileResponse.id}`, {
+      method: 'GET'
+    });
+
+    // Formatear la valoración promedio
+    if (profileResponse && typeof profileResponse.valoracionPromedio === 'number') {
+      profileResponse.valoracionPromedio = Number(profileResponse.valoracionPromedio).toFixed(1);
+    }
+
+    // Combinar los datos
+    return {
+      ...profileResponse,
+      valoraciones: valoracionesResponse || []
+    };
   } catch (error) {
     console.error('Error al obtener el perfil del paseador:', error);
     throw error;

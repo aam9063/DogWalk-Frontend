@@ -16,7 +16,7 @@ class ChatService {
     this.connectionPromise = null;
     this.maxRetries = 3;
     this.currentRetry = 0;
-    console.log('ChatService inicializado con URL base:', this.baseUrl);
+    this.lastToken = null;
   }
 
   async connect(token) {
@@ -25,38 +25,30 @@ class ChatService {
       return false;
     }
 
-    console.log('Estado actual de la conexión:', this.connection?.state);
 
     // Si ya hay una conexión activa y está conectada, retornarla
     if (this.connection?.state === signalR.HubConnectionState.Connected) {
-      console.log('Reutilizando conexión existente');
       return true;
     }
 
     // Si ya hay un intento de conexión en curso, esperar a que termine
     if (this.isConnecting && this.connectionPromise) {
-      console.log('Esperando intento de conexión en curso...');
       return this.connectionPromise;
     }
 
     try {
       this.isConnecting = true;
-      console.log("Iniciando nueva conexión...");
 
       if (this.connection) {
-        console.log('Deteniendo conexión anterior...');
         await this.connection.stop();
         this.connection = null;
       }
 
       const hubUrl = `${this.baseUrl}/chatHub`;
-      console.log("Intentando conectar a:", hubUrl);
-      console.log("Token (primeros 20 caracteres):", token.substring(0, 20));
 
       this.connection = new signalR.HubConnectionBuilder()
         .withUrl(hubUrl, {
           accessTokenFactory: () => {
-            console.log('Proporcionando token para la conexión');
             return token;
           },
           transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.LongPolling,
@@ -68,14 +60,11 @@ class ChatService {
         .withHubProtocol(new signalR.JsonHubProtocol())
         .withAutomaticReconnect({
           nextRetryDelayInMilliseconds: retryContext => {
-            console.log('Evaluando reintento:', retryContext);
             if (this.currentRetry >= this.maxRetries) {
-              console.log("Máximo número de reintentos alcanzado");
               return null;
             }
             this.currentRetry++;
             const delay = Math.min(1000 * Math.pow(2, retryContext.previousRetryCount), 10000);
-            console.log(`Reintentando conexión en ${delay}ms (intento ${this.currentRetry})`);
             return delay;
           }
         })
@@ -85,12 +74,8 @@ class ChatService {
       // Configura los controladores de eventos
       this.setupEventHandlers();
 
-      console.log('Iniciando conexión...');
       this.connectionPromise = this.connection.start()
         .then(() => {
-          console.log("Conexión establecida exitosamente");
-          console.log("Estado de la conexión:", this.connection.state);
-          console.log("ID de la conexión:", this.connection.connectionId);
           this.currentRetry = 0;
           return true;
         })
@@ -125,34 +110,50 @@ class ChatService {
   }
 
   setupEventHandlers() {
-    console.log('Configurando manejadores de eventos...');
     
     this.connection.on("RecibirMensaje", (mensaje) => {
-      console.log("Mensaje recibido:", mensaje);
-      this.callbacks.messageReceived(mensaje);
+      // Asegurarse de que el mensaje tenga toda la información necesaria
+      const mensajeCompleto = {
+        ...mensaje,
+        fechaHora: mensaje.fechaHora || new Date().toISOString(),
+        leido: mensaje.leido || false,
+        id: mensaje.id || `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      };
+      
+      // Asegurar que el callback se ejecute en el siguiente ciclo
+      setTimeout(() => {
+        this.callbacks.messageReceived(mensajeCompleto);
+      }, 0);
     });
 
     this.connection.on("MensajeLeido", (mensajeId) => {
-      console.log("Mensaje marcado como leído:", mensajeId);
       this.callbacks.messageRead(mensajeId);
     });
 
     this.connection.onclose((error) => {
-      console.log("Conexión cerrada:", error);
       this.currentRetry = 0;
       this.callbacks.connectionError(error);
+      // Intentar reconectar automáticamente
+      this.retryConnection();
     });
 
     this.connection.onreconnecting((error) => {
-      console.log("Intentando reconectar:", error);
       this.callbacks.connectionReconnecting(error);
     });
 
     this.connection.onreconnected((connectionId) => {
-      console.log("Reconectado con ID:", connectionId);
       this.currentRetry = 0;
       this.callbacks.connectionReconnected(connectionId);
     });
+  }
+
+  async retryConnection() {
+    if (this.currentRetry < this.maxRetries) {
+      const delay = Math.min(1000 * Math.pow(2, this.currentRetry), 10000);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      this.currentRetry++;
+      await this.connect(this.lastToken);
+    }
   }
 
   onMessageReceived(callback) {
@@ -176,7 +177,7 @@ class ChatService {
   }
 
   async sendMessage(destinatarioId, tipoDestinatario, mensaje, token) {
-    console.log("Intentando enviar mensaje con token:", token ? "presente" : "ausente");
+    this.lastToken = token;
     
     if (!token) {
       console.error("Error: No hay token disponible para enviar mensaje");
@@ -188,47 +189,56 @@ class ChatService {
       return false;
     }
 
-    try {
-      const emisorId = this.getUserIdFromToken(token);
-      const tipoEmisor = this.getUserRoleFromToken(token) === 'Usuario' ? 'Usuario' : 'Paseador';
+    let retryCount = 0;
+    const maxRetries = 2;
 
-      if (!emisorId) {
-        console.error("Error: No se pudo obtener el ID del emisor del token");
-        return false;
-      }
+    while (retryCount <= maxRetries) {
+      try {
+        const emisorId = this.getUserIdFromToken(token);
+        const tipoEmisor = this.getUserRoleFromToken(token) === 'Usuario' ? 'Usuario' : 'Paseador';
 
-      let retryCount = 0;
-      const maxRetries = 3;
+        if (!emisorId) {
+          console.error("Error: No se pudo obtener el ID del emisor del token");
+          return false;
+        }
 
-      while (retryCount < maxRetries) {
-        if (this.connection?.state === signalR.HubConnectionState.Connected) {
-          await this.connection.invoke("EnviarMensaje", {
-            enviadorId: emisorId,
-            tipoEmisor: tipoEmisor,
-            destinatarioId: destinatarioId,
-            tipoDestinatario: tipoDestinatario,
-            mensaje: mensaje
-          });
-          console.log("Mensaje enviado exitosamente");
-          return true;
-        } else {
-          console.log(`Intento de reconexión ${retryCount + 1}/${maxRetries}`);
+        // Verificar y reconectar si es necesario
+        if (this.connection?.state !== signalR.HubConnectionState.Connected) {
           const connected = await this.connect(token);
           if (!connected) {
             retryCount++;
-            if (retryCount < maxRetries) {
+            if (retryCount <= maxRetries) {
               await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+              continue;
             }
+            throw new Error("No se pudo establecer la conexión");
           }
         }
+
+        await this.connection.invoke("EnviarMensaje", {
+          enviadorId: emisorId,
+          tipoEmisor: tipoEmisor,
+          destinatarioId: destinatarioId,
+          tipoDestinatario: tipoDestinatario,
+          mensaje: mensaje
+        });
+        
+        return true;
+      } catch (error) {
+        console.error(`Error en intento ${retryCount + 1}:`, error);
+        retryCount++;
+        
+        if (retryCount > maxRetries) {
+          console.error("Error detallado al enviar mensaje después de reintentos:", error);
+          this.callbacks.connectionError(error);
+          return false;
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
       }
-      
-      throw new Error("No se pudo establecer la conexión después de varios intentos");
-    } catch (error) {
-      console.error("Error detallado al enviar mensaje:", error);
-      this.callbacks.connectionError(error);
-      return false;
     }
+    
+    return false;
   }
 
   getUserIdFromToken(token) {
@@ -282,7 +292,6 @@ class ChatService {
         await this.connection.stop();
         this.currentRetry = 0;
         this.connection = null;
-        console.log("Desconectado de SignalR");
       } catch (error) {
         console.error("Error al desconectar de SignalR:", error);
       }

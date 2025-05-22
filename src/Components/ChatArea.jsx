@@ -24,26 +24,32 @@ const ChatArea = ({ recipientId, recipientName, recipientType }) => {
   };
 
   const handleMessageReceived = useCallback((mensaje) => {
-    console.log('Nuevo mensaje recibido en handleMessageReceived:', mensaje);
     setMessages(prev => {
-      if (prev.some(m => m.id === mensaje.id)) {
-        return prev;
+      if (mensaje.enviadorId === recipientId || mensaje.enviadorId === user?.id) {
+        const mensajesSinTemporales = prev.filter(m => 
+          !(m.temporal && m.mensaje === mensaje.mensaje && m.enviadorId === mensaje.enviadorId)
+        );
+        
+        if (mensajesSinTemporales.some(m => m.id === mensaje.id)) {
+          return mensajesSinTemporales;
+        }
+
+        const updatedMessages = [...mensajesSinTemporales, mensaje];
+        setTimeout(scrollToBottom, 100);
+        return updatedMessages;
       }
-      return [...prev, mensaje];
+      return prev;
     });
-    scrollToBottom();
-  }, []);
+  }, [recipientId, user?.id]);
 
   const initializeChat = useCallback(async () => {
     if (!token) {
-      console.log('No hay token disponible');
       setConnectionStatus('error');
       toast.error('No hay sesión activa. Por favor, inicia sesión nuevamente.');
       return;
     }
 
     if (!isAuthenticated) {
-      console.log('Usuario no autenticado');
       setConnectionStatus('error');
       toast.error('Sesión no válida. Por favor, inicia sesión nuevamente.');
       return;
@@ -171,6 +177,19 @@ const ChatArea = ({ recipientId, recipientName, recipientType }) => {
     setIsConnecting(true);
 
     try {
+      const mensajeTemporal = {
+        id: `temp-${Date.now()}`,
+        mensaje: newMessage.trim(),
+        enviadorId: user?.id,
+        fechaHora: new Date().toISOString(),
+        leido: false,
+        isOwnMessage: true,
+        temporal: true
+      };
+
+      setMessages(prev => [...prev, mensajeTemporal]);
+      scrollToBottom();
+
       const success = await chatService.sendMessage(
         recipientId,
         recipientType,
@@ -179,23 +198,14 @@ const ChatArea = ({ recipientId, recipientName, recipientType }) => {
       );
 
       if (success) {
-        const nuevoMensaje = {
-          id: Date.now().toString(),
-          mensaje: newMessage.trim(),
-          enviadorId: user?.id,
-          fechaHora: new Date().toISOString(),
-          leido: false,
-          isOwnMessage: true
-        };
-        console.log('Enviando nuevo mensaje:', nuevoMensaje);
-        setMessages(prev => [...prev, nuevoMensaje]);
         setNewMessage('');
-        scrollToBottom();
       } else {
+        setMessages(prev => prev.filter(m => m.id !== mensajeTemporal.id));
         toast.error("No se pudo enviar el mensaje. Por favor, intenta nuevamente.");
       }
     } catch (error) {
       console.error("Error al enviar mensaje:", error);
+      setMessages(prev => prev.filter(m => !m.temporal));
       toast.error("Error al enviar el mensaje: " + (error.message || 'Error desconocido'));
     } finally {
       setIsConnecting(false);

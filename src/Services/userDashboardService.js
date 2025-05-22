@@ -129,5 +129,17 @@ export const getMisPerros = async () => {
   }
 };
 
+export const getReservasCompletadas = async () => {
+  try {
+    const response = await sendRequest('/api/Reserva/historial', {
+      method: 'GET'
+    });
+    return response;
+  } catch (error) {
+    console.error('Error al obtener las reservas completadas:', error);
+    throw new Error('No se pudieron obtener las reservas completadas');
+  }
+};
+
 
 

@@ -24,7 +24,6 @@ const ChatModal = ({ isOpen, onClose, recipientId, recipientName, recipientType 
   };
 
   const handleMessageReceived = useCallback((mensaje) => {
-    console.log('Nuevo mensaje recibido en handleMessageReceived:', mensaje);
     setMessages(prev => {
       // Evitar duplicados
       if (prev.some(m => m.id === mensaje.id)) {
@@ -38,19 +37,16 @@ const ChatModal = ({ isOpen, onClose, recipientId, recipientName, recipientType 
   // Memoizar la función de inicialización del chat
   const initializeChat = useCallback(async () => {
     if (!isOpen) {
-      console.log('Modal no está abierto, no se inicializa el chat');
       return;
     }
 
     if (!token) {
-      console.log('No hay token disponible');
       setConnectionStatus('error');
       toast.error('No hay sesión activa. Por favor, inicia sesión nuevamente.');
       return;
     }
 
     if (!isAuthenticated) {
-      console.log('Usuario no autenticado');
       setConnectionStatus('error');
       toast.error('Sesión no válida. Por favor, inicia sesión nuevamente.');
       return;
@@ -58,19 +54,15 @@ const ChatModal = ({ isOpen, onClose, recipientId, recipientName, recipientType 
 
     setIsConnecting(true);
     setConnectionStatus('connecting');
-    console.log('Iniciando chat con:', { recipientId, recipientName, recipientType });
-    console.log('Token disponible:', !!token);
     
     try {
       const success = await chatService.connect(token);
-      console.log('Resultado de la conexión:', success);
       
       if (success) {
         setConnectionStatus('connected');
         setConnectionAttempts(0);
         
         try {
-          console.log('Cargando mensajes existentes...');
           const response = await fetch(`${import.meta.env.VITE_API_URL}/api/Chat/conversacion/${recipientId}`, {
             headers: {
               'Authorization': `Bearer ${token}`
@@ -79,7 +71,6 @@ const ChatModal = ({ isOpen, onClose, recipientId, recipientName, recipientType 
 
           if (response.ok) {
             const data = await response.json();
-            console.log('Mensajes cargados:', data);
             if (data.mensajes && Array.isArray(data.mensajes)) {
               setMessages(data.mensajes);
               scrollToBottom();
@@ -98,7 +89,6 @@ const ChatModal = ({ isOpen, onClose, recipientId, recipientName, recipientType 
         chatService.onMessageReceived(handleMessageReceived);
 
         chatService.onMessageRead((messageId) => {
-          console.log('Mensaje marcado como leído:', messageId);
           setMessages(prev => prev.map(m => 
             m.id === messageId ? { ...m, leido: true } : m
           ));
@@ -111,12 +101,10 @@ const ChatModal = ({ isOpen, onClose, recipientId, recipientName, recipientType 
         });
 
         chatService.onConnectionReconnecting(() => {
-          console.log('Intentando reconectar el chat...');
           setConnectionStatus('reconnecting');
         });
 
         chatService.onConnectionReconnected(() => {
-          console.log('Chat reconectado exitosamente');
           setConnectionStatus('connected');
           setConnectionAttempts(0);
           if (reconnectTimeoutRef.current) {
@@ -140,7 +128,6 @@ const ChatModal = ({ isOpen, onClose, recipientId, recipientName, recipientType 
 
   const handleReconnect = useCallback(() => {
     if (connectionAttempts >= maxReconnectAttempts) {
-      console.log('Máximo número de intentos alcanzado');
       toast.error('No se pudo establecer la conexión después de varios intentos');
       setConnectionStatus('failed');
       return;
@@ -151,7 +138,6 @@ const ChatModal = ({ isOpen, onClose, recipientId, recipientName, recipientType 
     }
 
     setConnectionAttempts(prev => prev + 1);
-    console.log(`Intento de reconexión ${connectionAttempts + 1}/${maxReconnectAttempts}`);
     
     reconnectTimeoutRef.current = setTimeout(() => {
       if (connectionStatus !== 'connected') {
@@ -163,7 +149,6 @@ const ChatModal = ({ isOpen, onClose, recipientId, recipientName, recipientType 
   // Efecto para inicializar el chat
   useEffect(() => {
     if (isOpen && token && isAuthenticated) {
-      console.log('Iniciando chat al abrir modal');
       initializeChat();
     }
     return () => {
@@ -252,7 +237,7 @@ const ChatModal = ({ isOpen, onClose, recipientId, recipientName, recipientType 
                 <span className="ml-1 text-sm text-white">Error de conexión</span>
                 <button 
                   onClick={() => initializeChat()}
-                  className="ml-2 px-2 py-1 text-xs bg-white text-dog-green rounded hover:bg-gray-100"
+                  className="px-2 py-1 ml-2 text-xs bg-white rounded text-dog-green hover:bg-gray-100"
                 >
                   Reintentar
                 </button>
@@ -267,7 +252,7 @@ const ChatModal = ({ isOpen, onClose, recipientId, recipientName, recipientType 
                     setConnectionAttempts(0);
                     initializeChat();
                   }}
-                  className="ml-2 px-2 py-1 text-xs bg-white text-dog-green rounded hover:bg-gray-100"
+                  className="px-2 py-1 ml-2 text-xs bg-white rounded text-dog-green hover:bg-gray-100"
                 >
                   Reintentar
                 </button>

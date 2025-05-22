@@ -243,7 +243,7 @@ const PaseadorDashboard = () => {
     },
     {
       title: 'Valoración Promedio',
-      value: `${dashboardData?.valoracionPromedio || 0}/5`,
+      value: `${Number(dashboardData?.valoracionPromedio || 0).toFixed(1)}`,
       icon: <FaStar className="w-10 h-10 text-yellow-500" />
     },
     {
@@ -385,6 +385,15 @@ const PaseadorDashboard = () => {
                     >
                       <FaDog className="mr-3" />
                       Mis Reservas
+                    </button>
+                  </motion.li>
+                  <motion.li whileHover={{ x: 5 }} transition={{ duration: 0.2 }}>
+                    <button 
+                      className={`w-full flex items-center p-3 text-left rounded-md ${activeTab === 3 ? 'bg-dog-green text-white' : 'hover:bg-gray-100'}`}
+                      onClick={() => setActiveTab(3)}
+                    >
+                      <FaStar className="mr-3" />
+                      Valoraciones
                     </button>
                   </motion.li>
                 </ul>
@@ -591,6 +600,78 @@ const PaseadorDashboard = () => {
                     {reservasData.length === 0 && (
                       <div className="p-6 text-center bg-white rounded-lg">
                         <p className="text-gray-500"><strong>No tienes reservas pendientes</strong></p>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {activeTab === 3 && (
+                <>
+                  <h1 className="mb-8 text-2xl font-bold text-gray-900">
+                    Mis Valoraciones
+                  </h1>
+                  <div className="mb-8">
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                      <div className="p-6 bg-white rounded-lg shadow-sm">
+                        <h3 className="mb-2 text-lg font-semibold text-gray-700">Valoración Promedio</h3>
+                        <div className="flex items-center">
+                          <FaStar className="w-6 h-6 mr-2 text-yellow-400" />
+                          <p className="text-3xl font-bold text-gray-900">{Number(dashboardData?.valoracionPromedio || 0).toFixed(1)}</p>
+                        </div>
+                      </div>
+                      <div className="p-6 bg-white rounded-lg shadow-sm">
+                        <h3 className="mb-2 text-lg font-semibold text-gray-700">Total Valoraciones</h3>
+                        <div className="flex items-center">
+                          <FaUsers className="w-6 h-6 text-blue-500" />
+                          <span className="ml-2 text-3xl font-bold text-gray-900">{profileData?.cantidadValoraciones || 0}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <h2 className="mb-4 text-xl font-bold">Valoraciones</h2>
+                  <div className="space-y-4">
+                    {profileData?.valoraciones?.map((valoracion) => (
+                      <div key={valoracion.id} className="p-4 bg-white rounded-lg shadow">
+                        <div className="flex items-center mb-2">
+                          {valoracion.fotoUsuario ? (
+                            <img 
+                              src={valoracion.fotoUsuario} 
+                              alt={valoracion.nombreUsuario}
+                              className="object-cover w-10 h-10 mr-3 rounded-full"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="flex items-center justify-center w-10 h-10 mr-3 text-white rounded-full bg-dog-green">
+                              <FaUser size={20} />
+                            </div>
+                          )}
+                          <div>
+                            <h3 className="font-semibold">{valoracion.nombreUsuario}</h3>
+                            <div className="flex">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <FaStar 
+                                  key={star}
+                                  className={`w-4 h-4 ${
+                                    star <= valoracion.puntuacion 
+                                      ? 'text-yellow-400' 
+                                      : 'text-gray-300'
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-gray-600">{valoracion.comentario}</p>
+                        <p className="mt-2 text-sm text-gray-500">
+                          {new Date(valoracion.fechaValoracion).toLocaleDateString()}
+                        </p>
+                      </div>
+                    ))}
+                    {(!profileData?.valoraciones || profileData.valoraciones.length === 0) && (
+                      <div className="p-6 text-center bg-white rounded-lg">
+                        <p className="text-gray-500">No has recibido valoraciones todavía</p>
                       </div>
                     )}
                   </div>

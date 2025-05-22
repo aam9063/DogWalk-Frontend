@@ -30,7 +30,6 @@ const MessagesPage = () => {
       }
 
       const data = await response.json();
-      console.log('Conversaciones recibidas:', data);
       setConversations(data);
     } catch (error) {
       console.error('Error:', error);

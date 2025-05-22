@@ -3,12 +3,13 @@ import { useNavigate, Link } from 'react-router-dom';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import useAuthStore from '../store/authStore';
-import { FaHome, FaUser, FaDog, FaClipboardList } from 'react-icons/fa';
+import { FaHome, FaUser, FaDog, FaClipboardList, FaStar } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import FadeIn from '../Components/FadeIn';
-import { getDashboardData, getUserProfile, updateUserProfile, getDogsList, createDog, updateDog, deleteDog } from '../Services/userDashboardService';
+import { getDashboardData, getUserProfile, updateUserProfile, getDogsList, createDog, updateDog, deleteDog, getReservasCompletadas } from '../Services/userDashboardService';
 import { gsap } from 'gsap';
 import { FixedSizeList as List } from 'react-window';
+import { enviarValoracion } from '../Services/rankingService';
 
 // Componente de carga para usar con Suspense
 const LoadingIndicator = () => (
@@ -101,6 +102,18 @@ const Dashboard = () => {
     gpsUbicacion: ''
   });
 
+  // Estados para valoraciones
+  const [isValoracionModalOpen, setIsValoracionModalOpen] = useState(false);
+  const [valoracionForm, setValoracionForm] = useState({
+    reservaId: '',
+    paseadorId: '',
+    puntuacion: 5,
+    comentario: ''
+  });
+
+  // Cargar reservas completadas cuando se selecciona la pestaña de valoraciones
+  const [reservasCompletadas, setReservasCompletadas] = useState([]);
+
   // Cargar datos del dashboard
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -155,6 +168,23 @@ const Dashboard = () => {
 
     if (activeTab === 'mascotas' && isAuthenticated) {
       loadDogsList();
+    }
+  }, [activeTab, isAuthenticated]);
+
+  // Cargar reservas completadas cuando se selecciona la pestaña de valoraciones
+  useEffect(() => {
+    const loadReservasCompletadas = async () => {
+      try {
+        const data = await getReservasCompletadas();
+        setReservasCompletadas(data);
+      } catch (error) {
+        console.error('Error al cargar las reservas completadas:', error);
+        toast.error('Error al cargar las reservas completadas');
+      }
+    };
+
+    if (activeTab === 'valoraciones' && isAuthenticated) {
+      loadReservasCompletadas();
     }
   }, [activeTab, isAuthenticated]);
 
@@ -309,6 +339,32 @@ const Dashboard = () => {
     navigate('/login', { replace: true });
   };
 
+  const handleValoracionSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await enviarValoracion(
+        valoracionForm.paseadorId,
+        valoracionForm.puntuacion,
+        valoracionForm.comentario
+      );
+      toast.success('Valoración enviada con éxito');
+      setIsValoracionModalOpen(false);
+      
+      // Actualizar la lista de reservas localmente para marcar esta como valorada
+      setReservasCompletadas(prevReservas => 
+        prevReservas.map(reserva => 
+          reserva.id === valoracionForm.reservaId
+            ? { ...reserva, valorada: true }
+            : reserva
+        )
+      );
+      
+    } catch (error) {
+      console.error('Error al enviar la valoración:', error);
+      toast.error('Error al enviar la valoración');
+    }
+  };
+
   if (loading || isPageLoading) {
     return <LoadingIndicator />;
   }
@@ -412,6 +468,15 @@ const Dashboard = () => {
                   >
                     <FaDog className="mr-3" />
                     Mis Mascotas
+                  </button>
+                </motion.li>
+                <motion.li whileHover={{ x: 5 }} transition={{ duration: 0.2 }}>
+                  <button 
+                    className={`w-full flex items-center p-3 text-left rounded-md ${activeTab === 'valoraciones' ? 'bg-dog-green text-white' : 'hover:bg-gray-100'}`}
+                    onClick={() => setActiveTab('valoraciones')}
+                  >
+                    <FaStar className="mr-3" />
+                    Mis Valoraciones
                   </button>
                 </motion.li>
               </ul>
@@ -774,6 +839,77 @@ const Dashboard = () => {
                     </div>
                   </motion.div>
                 )}
+
+                {/* Valoraciones Section */}
+                {activeTab === 'valoraciones' && (
+                  <motion.div
+                    key="valoraciones"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="text-2xl font-semibold">Valorar Paseadores</h2>
+                    </div>
+
+                    {/* Reservas pendientes de valorar */}
+                    <div className="mb-8">
+                      <h3 className="mb-4 text-xl font-semibold">Reservas por Valorar</h3>
+                      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                        {reservasCompletadas.map((reserva) => (
+                          <motion.div
+                            key={reserva.id}
+                            className="p-6 border rounded-lg"
+                            whileHover={{ y: -5, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }}
+                          >
+                            <div className="flex items-center justify-between mb-4">
+                              <div>
+                                <h4 className="text-lg font-medium">{reserva.nombrePaseador}</h4>
+                                <p className="text-sm text-gray-500">
+                                  Fecha: {new Date(reserva.fecha).toLocaleDateString()}
+                                </p>
+                              </div>
+                              {reserva.valorada ? (
+                                <button
+                                  disabled
+                                  className="px-4 py-2 text-gray-500 bg-gray-100 rounded-md cursor-not-allowed"
+                                >
+                                  Valorada
+                                </button>
+                              ) : (
+                                <motion.button
+                                  onClick={() => {
+                                    setValoracionForm({
+                                      reservaId: reserva.id,
+                                      paseadorId: reserva.paseadorId,
+                                      puntuacion: 5,
+                                      comentario: ''
+                                    });
+                                    setIsValoracionModalOpen(true);
+                                  }}
+                                  className="px-4 py-2 text-white rounded-md bg-dog-green hover:bg-dog-light-green"
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                >
+                                  Valorar
+                                </motion.button>
+                              )}
+                            </div>
+                            <p className="text-gray-600">
+                              Mascota: {reserva.nombrePerro}
+                            </p>
+                          </motion.div>
+                        ))}
+                        {reservasCompletadas.length === 0 && (
+                          <div className="col-span-2 p-6 text-center text-gray-500 border rounded-lg">
+                            No hay reservas pendientes de valorar
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
               </AnimatePresence>
             </Suspense>
           </div>
@@ -872,6 +1008,82 @@ const Dashboard = () => {
                   className="px-4 py-2 text-white rounded-md bg-dog-green hover:bg-dog-light-green"
                 >
                   {modalMode === 'create' ? 'Agregar' : 'Guardar Cambios'}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Modal de Valoración */}
+      {isValoracionModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <motion.div 
+            className="w-full max-w-md p-6 bg-white rounded-lg shadow-xl"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold">Valorar Paseador</h3>
+              <button 
+                onClick={() => setIsValoracionModalOpen(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleValoracionSubmit}>
+              <div className="mb-4">
+                <label className="block mb-2 text-sm font-medium text-gray-700">
+                  Puntuación
+                </label>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setValoracionForm(prev => ({ ...prev, puntuacion: star }))}
+                      className="focus:outline-none"
+                    >
+                      <FaStar
+                        className={star <= valoracionForm.puntuacion ? "text-yellow-400" : "text-gray-300"}
+                        size={24}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="block mb-2 text-sm font-medium text-gray-700">
+                  Comentario
+                </label>
+                <textarea
+                  value={valoracionForm.comentario}
+                  onChange={(e) => setValoracionForm(prev => ({ ...prev, comentario: e.target.value }))}
+                  className="w-full p-2 border rounded-md focus:ring-2 focus:ring-dog-green focus:border-transparent"
+                  rows="4"
+                  placeholder="Escribe tu comentario aquí..."
+                />
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsValoracionModalOpen(false)}
+                  className="px-4 py-2 text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-white rounded-md bg-dog-green hover:bg-dog-light-green"
+                >
+                  Enviar Valoración
                 </button>
               </div>
             </form>
