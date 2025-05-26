@@ -569,9 +569,12 @@ const Dashboard = () => {
                         <div className="border rounded-lg shadow-sm">
                           {/* Encabezados de la tabla */}
                           <div className="flex border-b bg-gray-50">
-                            <div className="w-[20%] p-3 font-semibold text-left">Fecha</div>
-                            <div className="w-[60%] p-3 font-semibold text-left">Nº Factura</div>
-                            <div className="w-[20%] p-3 font-semibold text-right">Total</div>
+                            <div className="w-[30%] sm:w-[25%] p-2 sm:p-3 font-semibold text-left text-sm sm:text-base">Fecha</div>
+                            <div className="w-[40%] sm:w-[45%] p-2 sm:p-3 font-semibold text-left text-sm sm:text-base">
+                              <span className="hidden sm:inline">Nº Factura</span>
+                              <span className="sm:hidden">Factura</span>
+                            </div>
+                            <div className="w-[30%] p-2 sm:p-3 font-semibold text-right text-sm sm:text-base">Total</div>
                           </div>
                           
                           {/* Lista virtual */}
@@ -584,16 +587,42 @@ const Dashboard = () => {
                               itemData={dashboardData.historialCompras}
                               className="scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
                             >
-                              {CompraRow}
+                              {({ index, style, data }) => {
+                                const compra = data[index];
+                                return (
+                                  <motion.div
+                                    style={style}
+                                    className="flex items-center border-b hover:bg-gray-50"
+                                    whileHover={{ scale: 1.005 }}
+                                  >
+                                    <div className="w-[30%] sm:w-[25%] p-2 sm:p-3 text-sm whitespace-nowrap">
+                                      {new Date(compra.fechaCompra).toLocaleDateString('es-ES', {
+                                        day: '2-digit',
+                                        month: '2-digit',
+                                        year: '2-digit'
+                                      })}
+                                    </div>
+                                    <div className="w-[40%] sm:w-[45%] p-2 sm:p-3 font-mono text-xs sm:text-sm truncate" title={compra.numeroFactura}>
+                                      <span className="hidden sm:inline">{compra.numeroFactura}</span>
+                                      <span className="sm:hidden">
+                                        {compra.numeroFactura.substring(0, 6)}...
+                                      </span>
+                                    </div>
+                                    <div className="w-[30%] p-2 sm:p-3 text-right text-sm whitespace-nowrap">
+                                      {compra.total.toFixed(2)}€
+                                    </div>
+                                  </motion.div>
+                                );
+                              }}
                             </List>
                           </div>
                           
                           {/* Pie de tabla con el total */}
                           <div className="flex border-t bg-gray-50">
-                            <div className="w-[20%] p-3"></div>
-                            <div className="w-[60%] p-3 font-bold text-right">Total Acumulado:</div>
-                            <div className="w-[20%] p-3 font-bold text-right">
-                              {dashboardData.historialCompras.reduce((total, compra) => total + compra.total, 0).toFixed(2)} €
+                            <div className="w-[30%] sm:w-[25%] p-2 sm:p-3"></div>
+                            <div className="w-[40%] sm:w-[45%] p-2 sm:p-3"></div>
+                            <div className="w-[30%] p-2 sm:p-3 font-bold text-right text-sm sm:text-base">
+                              {dashboardData.historialCompras.reduce((total, compra) => total + compra.total, 0).toFixed(2)}€
                             </div>
                           </div>
                         </div>

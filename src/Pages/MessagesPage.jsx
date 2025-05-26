@@ -3,6 +3,7 @@ import ChatArea from '../Components/ChatArea';
 import Navbar from '../Components/Navbar';
 import { toast } from 'react-toastify';
 import useAuthStore from '../store/authStore';
+import { FaArrowLeft } from 'react-icons/fa';
 
 const MessagesPage = () => {
   const [conversations, setConversations] = useState([]);
@@ -54,6 +55,10 @@ const MessagesPage = () => {
     });
   };
 
+  const handleBackToList = () => {
+    setSelectedChat(null);
+  };
+
   const formatLastMessageDate = (dateString) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -86,8 +91,8 @@ const MessagesPage = () => {
       <Navbar />
       <div className="container mx-auto h-[calc(100vh-64px)]">
         <div className="flex h-full bg-white">
-          {/* Lista de conversaciones (izquierda) */}
-          <div className="w-1/3 border-r">
+          {/* Lista de conversaciones (izquierda/móvil completo) */}
+          <div className={`md:w-1/3 ${selectedChat ? 'hidden md:block' : 'w-full'} border-r`}>
             <div className="p-4 border-b">
               <h2 className="text-xl font-semibold text-dog-green">Mensajes</h2>
             </div>
@@ -149,14 +154,25 @@ const MessagesPage = () => {
             </div>
           </div>
 
-          {/* Área de chat (derecha) */}
-          <div className="w-2/3 bg-gray-50">
+          {/* Área de chat (derecha/móvil completo cuando está seleccionado) */}
+          <div className={`${selectedChat ? 'w-full md:w-2/3' : 'hidden md:block md:w-2/3'} bg-gray-50`}>
             {selectedChat ? (
-              <ChatArea
-                recipientId={selectedChat.recipientId}
-                recipientName={selectedChat.recipientName}
-                recipientType={selectedChat.recipientType}
-              />
+              <>
+                <div className="flex items-center p-4 bg-white border-b md:hidden">
+                  <button 
+                    onClick={handleBackToList}
+                    className="mr-4 text-gray-600 hover:text-gray-800"
+                  >
+                    <FaArrowLeft size={20} />
+                  </button>
+                  <h2 className="text-lg font-semibold">{selectedChat.recipientName}</h2>
+                </div>
+                <ChatArea
+                  recipientId={selectedChat.recipientId}
+                  recipientName={selectedChat.recipientName}
+                  recipientType={selectedChat.recipientType}
+                />
+              </>
             ) : (
               <div className="flex items-center justify-center h-full text-gray-500">
                 Selecciona una conversación para comenzar

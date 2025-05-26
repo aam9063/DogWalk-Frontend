@@ -10,6 +10,31 @@ const CartDrawer = ({ cart, onCartUpdate }) => {
   const { isOpen, close } = useCartStore();
   const [isProcessing, setIsProcessing] = useState(false);
 
+  const getDefaultImageByCategory = (category) => {
+    if (!category) return '/imgs/DogWalkLogo.jpg';
+    
+    const normalizedCategory = category.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    
+    switch (normalizedCategory) {
+      case 'juguete':
+        return '/imgs/juguete.jpg';
+      case 'alimentacion':
+        return '/imgs/alimentación.jpg';
+      case 'snack':
+        return '/imgs/snacks.jpg';
+      case 'accesorio':
+        return '/imgs/accesorio.jpg';
+      case 'higiene':
+        return '/imgs/higiene.jpg';
+      case 'salud':
+        return '/imgs/vet.jpg';
+      case 'ropa':
+        return '/imgs/ropa.png';
+      default:
+        return '/imgs/DogWalkLogo.jpg';
+    }
+  };
+
   const handleUpdateQuantity = async (itemId, currentQuantity, increment) => {
     try {
       const newQuantity = currentQuantity + (increment ? 1 : -1);
@@ -78,7 +103,7 @@ const CartDrawer = ({ cart, onCartUpdate }) => {
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b">
-              <h2 className="text-xl font-semibold">Carrito de Compra</h2>
+              <h2 className="text-xl font-semibold">Carrito</h2>
               <button
                 onClick={close}
                 className="p-2 text-gray-500 hover:text-gray-700"
@@ -88,7 +113,7 @@ const CartDrawer = ({ cart, onCartUpdate }) => {
             </div>
 
             {/* Cart Items */}
-            <div className="flex flex-col h-full overflow-hidden">
+            <div className="flex flex-col h-full">
               <div className="flex-1 p-4 overflow-y-auto">
                 {cart?.items?.length > 0 ? (
                   <div className="space-y-4">
@@ -99,9 +124,17 @@ const CartDrawer = ({ cart, onCartUpdate }) => {
                       >
                         <div className="relative w-20 h-20 overflow-hidden rounded">
                           <img
-                            src={item.imagenUrl || '/imgs/DogWalkLogo.jpg'}
+                            src={item.imagenUrl}
                             alt={item.nombreArticulo}
                             className="absolute inset-0 object-cover w-full h-full"
+                            onError={(e) => {
+                              if (item.categoria) {
+                                e.target.src = getDefaultImageByCategory(item.categoria);
+                              } else {
+                                e.target.src = '/imgs/DogWalkLogo.jpg';
+                              }
+                              e.target.onerror = null;
+                            }}
                           />
                         </div>
                         <div className="flex-1 ml-4">
@@ -152,23 +185,23 @@ const CartDrawer = ({ cart, onCartUpdate }) => {
                 )}
               </div>
 
-              {/* Footer */}
+              {/* Fixed Bottom Section */}
               {cart?.items?.length > 0 && (
-                <div className="p-4 pb-6 border-t bg-gray-50">
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-lg font-medium">Total</span>
-                    <span className="text-xl font-bold text-dog-green">
-                      {new Intl.NumberFormat('es-ES', {
-                        style: 'currency',
-                        currency: 'EUR'
-                      }).format(cart.total)}
-                    </span>
-                  </div>
-                  <div className="space-y-3">
+                <div className="sticky bottom-0 left-0 right-0 bg-white border-t">
+                  <div className="p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-lg font-medium">Total</span>
+                      <span className="text-xl font-bold text-dog-green">
+                        {new Intl.NumberFormat('es-ES', {
+                          style: 'currency',
+                          currency: 'EUR'
+                        }).format(cart.total)}
+                      </span>
+                    </div>
                     <button
                       onClick={handleCheckout}
                       disabled={isProcessing}
-                      className="flex items-center justify-center w-full px-4 py-3 text-white rounded-md bg-dog-green hover:bg-dog-light-green disabled:bg-gray-400 disabled:cursor-not-allowed"
+                      className="flex items-center justify-center w-full px-4 py-3 mb-3 text-white rounded-md bg-dog-green hover:bg-dog-light-green disabled:bg-gray-400 disabled:cursor-not-allowed"
                     >
                       {isProcessing ? (
                         <span>Procesando...</span>
@@ -181,10 +214,10 @@ const CartDrawer = ({ cart, onCartUpdate }) => {
                     </button>
                     <button
                       onClick={handleClearCart}
-                      className="flex items-center justify-center w-full px-4 py-2 text-sm text-gray-500 hover:text-red-500"
+                      className="flex items-center px-3 py-1.5 text-sm text-gray-600 border border-gray-300 rounded-md hover:bg-gray-100"
                     >
                       <FaTrash className="mr-2 text-sm" />
-                      Vaciar carrito
+                      Vaciar cesta
                     </button>
                   </div>
                 </div>

@@ -11,6 +11,8 @@ import paseadorProfileService from "../Services/paseadorProfileService";
 import { motion } from "framer-motion";
 import FadeIn from "../Components/FadeIn";
 import { FaUser, FaStar } from "react-icons/fa";
+import { FixedSizeList as List } from 'react-window';
+import InfiniteLoader from 'react-window-infinite-loader';
 
 // Establecer token de acceso de Mapbox
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
@@ -52,6 +54,14 @@ const SearchCaregivers = () => {
   // Referencias
   const mapContainerRef = useRef(null);
   const isSearchingRef = useRef(false); // Para evitar búsquedas simultáneas
+  
+  // Estados para paginación
+  const [paginacion, setPaginacion] = useState({
+    paginaActual: 1,
+    elementosPorPagina: 10,
+    totalPaginas: 1,
+    totalItems: 0
+  });
   
   // Carga de servicios disponibles - una sola vez
   useEffect(() => {
@@ -180,17 +190,27 @@ const SearchCaregivers = () => {
     
     setLoading(true);
     try {
-      const data = await caregiverService.getAll();
+      const data = await caregiverService.getAll({}, paginacion.paginaActual, paginacion.elementosPorPagina);
       console.log("Datos iniciales cargados:", data);
-      setCuidadores(data);
       
-      // Cargar valoraciones para cada cuidador
-      data.forEach(cuidador => {
-        cargarValoraciones(cuidador.id);
+      // Actualizar el estado con los datos paginados
+      setCuidadores(data.items || []);
+      setPaginacion({
+        paginaActual: data.paginaActual || 1,
+        elementosPorPagina: data.elementosPorPagina || 10,
+        totalPaginas: data.totalPaginas || 1,
+        totalItems: data.totalItems || 0
       });
       
-      if (map) {
-        actualizarMarcadoresRef.current(data);
+      // Cargar valoraciones para cada cuidador
+      if (data.items && Array.isArray(data.items)) {
+        data.items.forEach(cuidador => {
+          cargarValoraciones(cuidador.id);
+        });
+      }
+      
+      if (map && data.items) {
+        actualizarMarcadoresRef.current(data.items);
       }
     } catch (error) {
       console.error("Error al cargar datos iniciales:", error);
@@ -199,7 +219,7 @@ const SearchCaregivers = () => {
       setLoading(false);
       isSearchingRef.current = false;
     }
-  }, [map]);
+  }, [map, paginacion.paginaActual, paginacion.elementosPorPagina]);
   
   // Búsqueda con filtros aplicados - usando ref de actualizarMarcadores
   const buscarCuidadores = useCallback(async () => {
@@ -210,14 +230,25 @@ const SearchCaregivers = () => {
     setError(null);
     
     try {
-      const cuidadoresData = await caregiverService.getAll(filtros);
-      console.log("Datos filtrados:", cuidadoresData);
+      const data = await caregiverService.getAll(
+        filtros,
+        paginacion.paginaActual,
+        paginacion.elementosPorPagina
+      );
+      console.log("Datos filtrados:", data);
       
-      setCuidadores(cuidadoresData);
+      // Actualizar el estado con los datos paginados
+      setCuidadores(data.items || []);
+      setPaginacion({
+        paginaActual: data.paginaActual || 1,
+        elementosPorPagina: data.elementosPorPagina || 10,
+        totalPaginas: data.totalPaginas || 1,
+        totalItems: data.totalItems || 0
+      });
       
       // Actualizar marcadores en el mapa
-      if (map) {
-        actualizarMarcadoresRef.current(cuidadoresData);
+      if (map && data.items) {
+        actualizarMarcadoresRef.current(data.items);
       }
     } catch (error) {
       console.error("Error al buscar cuidadores:", error);
@@ -227,7 +258,7 @@ const SearchCaregivers = () => {
       setLoading(false);
       isSearchingRef.current = false;
     }
-  }, [filtros, map]);
+  }, [filtros, map, paginacion.paginaActual, paginacion.elementosPorPagina]);
   
   // Ref para la función buscarCuidadores
   const buscarCuidadoresRef = useRef(buscarCuidadores);
@@ -353,7 +384,222 @@ const SearchCaregivers = () => {
     
     return precios.length > 0 ? Math.min(...precios) : null;
   };
-  
+
+  // Función para cambiar de página
+  const cambiarPagina = (nuevaPagina) => {
+    setPaginacion(prev => ({
+      ...prev,
+      paginaActual: nuevaPagina
+    }));
+  };
+
+  // Efecto para recargar cuando cambia la página
+  useEffect(() => {
+    if (!isSearchingRef.current) {
+      buscarCuidadores();
+    }
+  }, [paginacion.paginaActual]);
+
+  // Reemplazar el div con scroll por InfiniteLoader y List
+  const renderCuidadoresList = () => {
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center p-4 text-center">
+          <div className="w-8 h-8 border-4 rounded-full border-t-dog-green border-r-dog-green border-b-transparent border-l-transparent animate-spin"></div>
+          <span className="ml-2">Buscando cuidadores...</span>
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="p-4 text-red-700 bg-red-100 rounded-md">
+          {error}
+        </div>
+      );
+    }
+
+    if (!Array.isArray(cuidadores) || cuidadores.length === 0) {
+      return (
+        <div className="p-4 text-center">
+          No se encontraron cuidadores con los criterios especificados.
+        </div>
+      );
+    }
+
+    return (
+      <div>
+        <div className="space-y-4 overflow-y-auto max-h-[500px] pr-2 custom-scrollbar">
+          {cuidadores.map((cuidador) => (
+            <FadeIn key={cuidador.id} direction="up" delay={0.1}>
+              <div className="p-4 transition-shadow border rounded-lg shadow-sm hover:shadow-md">
+                <div className="flex items-start gap-4">
+                  {/* Avatar */}
+                  <div className="flex-shrink-0">
+                    <Link to={`/paseador/${cuidador.id}`}>
+                      {cuidador.foto ? (
+                        <img 
+                          src={cuidador.foto} 
+                          alt={`${cuidador.nombre} ${cuidador.apellido}`} 
+                          className="object-cover w-16 h-16 rounded-full"
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center w-16 h-16 text-white rounded-full bg-dog-green">
+                          <FaUser size={24} />
+                        </div>
+                      )}
+                    </Link>
+                  </div>
+
+                  {/* Información */}
+                  <div className="flex-1">
+                    <div className="flex justify-between">
+                      <Link to={`/paseador/${cuidador.id}`} className="hover:underline">
+                        <h3 className="mb-1 text-lg font-semibold">
+                          {cuidador.nombre} {cuidador.apellido}
+                        </h3>
+                      </Link>
+                      <div className="font-semibold text-right text-dog-green">
+                        {cuidador.servicios && Array.isArray(cuidador.servicios) && cuidador.servicios.length > 0
+                          ? `Desde ${formatearPrecio(obtenerPrecioMinimo(cuidador.servicios))}`
+                          : ""}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center mb-1">
+                      <div className="flex">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <FaStar 
+                            key={star} 
+                            className={`w-4 h-4 ${
+                              star <= (valoraciones[cuidador.id]?.promedio || 0)
+                                ? 'text-yellow-400' 
+                                : 'text-gray-300'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <span className="ml-1 text-sm text-gray-600">
+                        {valoraciones[cuidador.id]?.promedio 
+                          ? `${valoraciones[cuidador.id].promedio.toFixed(1)}` 
+                          : "Sin valoraciones"} 
+                        {valoraciones[cuidador.id]?.total > 0 && 
+                          ` (${valoraciones[cuidador.id].total} valoraciones)`}
+                      </span>
+                    </div>
+
+                    <p className="text-sm text-gray-600">{cuidador.direccion}</p>
+
+                    {/* Etiquetas de servicios */}
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {cuidador.servicios && Array.isArray(cuidador.servicios) && cuidador.servicios.map(servicio => (
+                        <span 
+                          key={servicio.id}
+                          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-dog-light-green text-dog-green"
+                        >
+                          {servicio.nombre} {servicio.precio ? `- ${formatearPrecio(servicio.precio)}` : ""}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </FadeIn>
+          ))}
+        </div>
+        
+        {/* Paginación */}
+        <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 sm:px-6">
+          <div className="flex justify-between flex-1 sm:hidden">
+            <button
+              onClick={() => cambiarPagina(paginacion.paginaActual - 1)}
+              disabled={paginacion.paginaActual === 1}
+              className={`relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 ${
+                paginacion.paginaActual === 1 ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+            >
+              Anterior
+            </button>
+            <button
+              onClick={() => cambiarPagina(paginacion.paginaActual + 1)}
+              disabled={paginacion.paginaActual === paginacion.totalPaginas}
+              className={`relative inline-flex items-center px-4 py-2 ml-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 ${
+                paginacion.paginaActual === paginacion.totalPaginas ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+            >
+              Siguiente
+            </button>
+          </div>
+          <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm text-gray-700">
+                Mostrando{' '}
+                <span className="font-medium">
+                  {((paginacion.paginaActual - 1) * paginacion.elementosPorPagina) + 1}
+                </span>{' '}
+                a{' '}
+                <span className="font-medium">
+                  {Math.min(paginacion.paginaActual * paginacion.elementosPorPagina, paginacion.totalItems)}
+                </span>{' '}
+                de{' '}
+                <span className="font-medium">{paginacion.totalItems}</span>{' '}
+                resultados
+              </p>
+            </div>
+            <div>
+              <nav className="inline-flex -space-x-px rounded-md shadow-sm isolate" aria-label="Pagination">
+                <button
+                  onClick={() => cambiarPagina(paginacion.paginaActual - 1)}
+                  disabled={paginacion.paginaActual === 1}
+                  className={`relative inline-flex items-center px-2 py-2 text-gray-400 rounded-l-md ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 ${
+                    paginacion.paginaActual === 1 ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                >
+                  <span className="sr-only">Anterior</span>
+                  <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
+                  </svg>
+                </button>
+                
+                {[...Array(paginacion.totalPaginas)].map((_, idx) => {
+                  const pagina = idx + 1;
+                  const isActive = pagina === paginacion.paginaActual;
+                  
+                  return (
+                    <button
+                      key={pagina}
+                      onClick={() => cambiarPagina(pagina)}
+                      className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
+                        isActive
+                          ? 'z-10 bg-dog-green text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-dog-green'
+                          : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
+                      }`}
+                    >
+                      {pagina}
+                    </button>
+                  );
+                })}
+                
+                <button
+                  onClick={() => cambiarPagina(paginacion.paginaActual + 1)}
+                  disabled={paginacion.paginaActual === paginacion.totalPaginas}
+                  className={`relative inline-flex items-center px-2 py-2 text-gray-400 rounded-r-md ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 ${
+                    paginacion.paginaActual === paginacion.totalPaginas ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                >
+                  <span className="sr-only">Siguiente</span>
+                  <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
@@ -561,103 +807,7 @@ const SearchCaregivers = () => {
               </div>
               
               {/* Contenedor con scroll */}
-              <div className="space-y-4 overflow-y-auto max-h-[500px] pr-2 custom-scrollbar">
-                {loading ? (
-                  <div className="flex items-center justify-center p-4 text-center">
-                    <div className="w-8 h-8 border-4 rounded-full border-t-dog-green border-r-dog-green border-b-transparent border-l-transparent animate-spin"></div>
-                    <span className="ml-2">Buscando cuidadores...</span>
-                  </div>
-                ) : error ? (
-                  <div className="p-4 text-red-700 bg-red-100 rounded-md">
-                    {error}
-                  </div>
-                ) : !Array.isArray(cuidadores) ? (
-                  <div className="p-4 text-center">
-                    Error al cargar los datos. Por favor, inténtalo de nuevo.
-                  </div>
-                ) : cuidadores.length === 0 ? (
-                  <div className="p-4 text-center">
-                    No se encontraron cuidadores con los criterios especificados.
-                  </div>
-                ) : (
-                  Array.isArray(cuidadores) && cuidadores.map(cuidador => (
-                    <FadeIn key={cuidador.id} direction="up" delay={0.1}>
-                      <div className="p-4 transition-shadow border rounded-lg shadow-sm hover:shadow-md">
-                        <div className="flex items-start gap-4">
-                          {/* Avatar */}
-                          <div className="flex-shrink-0">
-                            <Link to={`/paseador/${cuidador.id}`}>
-                              {cuidador.foto ? (
-                              <img 
-                                  src={cuidador.foto} 
-                                alt={`${cuidador.nombre} ${cuidador.apellido}`} 
-                                className="object-cover w-16 h-16 rounded-full"
-                              />
-                              ) : (
-                                <div className="flex items-center justify-center w-16 h-16 text-white rounded-full bg-dog-green">
-                                  <FaUser size={24} />
-                                </div>
-                              )}
-                            </Link>
-                          </div>
-                          
-                          {/* Información */}
-                          <div className="flex-1">
-                            <div className="flex justify-between">
-                              <Link to={`/paseador/${cuidador.id}`} className="hover:underline">
-                                <h3 className="mb-1 text-lg font-semibold">
-                                  {cuidador.nombre} {cuidador.apellido}
-                                </h3>
-                              </Link>
-                              <div className="font-semibold text-right text-dog-green">
-                                {cuidador.servicios && Array.isArray(cuidador.servicios) && cuidador.servicios.length > 0
-                                  ? `Desde ${formatearPrecio(obtenerPrecioMinimo(cuidador.servicios))}`
-                                  : ""}
-                              </div>
-                            </div>
-                            
-                            <div className="flex items-center mb-1">
-                              <div className="flex">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <FaStar 
-                                    key={star} 
-                                    className={`w-4 h-4 ${
-                                      star <= (valoraciones[cuidador.id]?.promedio || 0)
-                                        ? 'text-yellow-400' 
-                                        : 'text-gray-300'
-                                    }`}
-                                  />
-                                ))}
-                              </div>
-                              <span className="ml-1 text-sm text-gray-600">
-                                {valoraciones[cuidador.id]?.promedio 
-                                  ? `${valoraciones[cuidador.id].promedio.toFixed(1)}` 
-                                  : "Sin valoraciones"} 
-                                {valoraciones[cuidador.id]?.total > 0 && 
-                                  ` (${valoraciones[cuidador.id].total} valoraciones)`}
-                              </span>
-                            </div>
-                            
-                            <p className="text-sm text-gray-600">{cuidador.direccion}</p>
-                            
-                            {/* Etiquetas de servicios */}
-                            <div className="flex flex-wrap gap-2 mt-2">
-                              {cuidador.servicios && Array.isArray(cuidador.servicios) && cuidador.servicios.map(servicio => (
-                                <span 
-                                  key={servicio.id}
-                                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-dog-light-green text-dog-green"
-                                >
-                                  {servicio.nombre} {servicio.precio ? `- ${formatearPrecio(servicio.precio)}` : ""}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </FadeIn>
-                  ))
-                )}
-              </div>
+              {renderCuidadoresList()}
 
               {/* Estilos para el scrollbar personalizado */}
               <style jsx="true">{`

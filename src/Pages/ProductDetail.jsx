@@ -6,16 +6,26 @@ import { FaArrowLeft, FaShoppingCart, FaMinus, FaPlus } from 'react-icons/fa';
 import Navbar from '../Components/Navbar';
 import Footer from '../Components/Footer';
 import articleService from '../Services/articleService';
+import cartService from '../Services/cartService';
+import useAuthStore from '../store/authStore';
+import useCartStore from '../store/cartStore';
+import AuthPopup from '../Components/Common/AuthPopup';
+import Toast from '../Components/Common/Toast';
 
 const ProductDetail = () => {
   const { productId } = useParams();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuthStore();
+  const { open: openCart } = useCartStore();
   
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [isAuthPopupOpen, setIsAuthPopupOpen] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
   
   // Fetch del producto
   useEffect(() => {
@@ -118,10 +128,28 @@ const ProductDetail = () => {
   };
   
   // Añadir al carrito
-  const handleAddToCart = () => {
-    // Aquí iría la lógica para añadir al carrito
-    console.log(`Añadido al carrito: ${quantity} unidad(es) del producto ${product.id}`);
-    // Implementar la funcionalidad del carrito según necesites
+  const handleAddToCart = async () => {
+    if (!isAuthenticated) {
+      setIsAuthPopupOpen(true);
+      return;
+    }
+
+    try {
+      setIsAddingToCart(true);
+      await cartService.addItem(product.id, quantity);
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
+    } catch (error) {
+      console.error('Error al añadir al carrito:', error);
+      alert('Error al añadir el producto al carrito');
+    } finally {
+      setIsAddingToCart(false);
+    }
+  };
+
+  const handleViewCart = () => {
+    setShowToast(false);
+    openCart();
   };
   
   // Cambiar imagen actual
@@ -300,10 +328,11 @@ const ProductDetail = () => {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={handleAddToCart}
-                      className="flex items-center justify-center flex-1 px-6 py-2 text-white rounded-md bg-dog-green hover:bg-dog-light-green"
+                      disabled={isAddingToCart}
+                      className="flex items-center justify-center flex-1 px-6 py-2 text-white rounded-md bg-dog-green hover:bg-dog-light-green disabled:bg-gray-400 disabled:cursor-not-allowed"
                     >
                       <FaShoppingCart className="mr-2" />
-                      Añadir al carrito
+                      {isAddingToCart ? 'Añadiendo...' : 'Añadir al carrito'}
                     </motion.button>
                   </div>
                 </div>
@@ -352,6 +381,22 @@ const ProductDetail = () => {
       </div>
       
       <Footer />
+
+      {/* Auth Popup */}
+      <AuthPopup
+        isOpen={isAuthPopupOpen}
+        onClose={() => setIsAuthPopupOpen(false)}
+        message="Por favor, inicia sesión para añadir productos al carrito"
+      />
+
+      {/* Toast de confirmación */}
+      <Toast
+        message={`¡${product?.nombre} añadido al carrito!`}
+        isVisible={showToast}
+        onClose={() => setShowToast(false)}
+        actionText="Ver Carrito"
+        onAction={handleViewCart}
+      />
     </div>
   );
 };

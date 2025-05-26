@@ -46,7 +46,9 @@ const PaseadorDashboard = () => {
     nombre: '',
     apellido: '',
     direccion: '',
-    telefono: ''
+    telefono: '',
+    latitud: '',
+    longitud: ''
   });
   const sidebarRef = React.useRef(null);
 
@@ -84,9 +86,56 @@ const PaseadorDashboard = () => {
       nombre: profileData?.nombre || '',
       apellido: profileData?.apellido || '',
       direccion: profileData?.direccion || '',
-      telefono: profileData?.telefono || ''
+      telefono: profileData?.telefono || '',
+      latitud: profileData?.latitud?.toString() || '',
+      longitud: profileData?.longitud?.toString() || ''
     });
     setIsEditProfileModalOpen(true);
+  };
+
+  // Efecto para mantener sincronizados los datos del perfil
+  useEffect(() => {
+    const loadProfileData = async () => {
+      try {
+        const data = await getPaseadorProfile();
+        console.log('Datos del perfil cargados:', data);
+        setProfileData(data);
+        // Actualizar también el formulario de edición con los datos más recientes
+        setEditProfileForm({
+          nombre: data.nombre || '',
+          apellido: data.apellido || '',
+          direccion: data.direccion || '',
+          telefono: data.telefono || '',
+          latitud: data.latitud?.toString() || '0',
+          longitud: data.longitud?.toString() || '0'
+        });
+      } catch (error) {
+        console.error('Error al cargar el perfil:', error);
+        toast.error('Error al cargar los datos del perfil');
+      }
+    };
+
+    // Cargar datos del perfil al montar el componente y cuando cambie la pestaña
+    loadProfileData();
+  }, [activeTab]);
+
+  // Función para recargar los datos del perfil
+  const reloadProfileData = async () => {
+    try {
+      const data = await getPaseadorProfile();
+      console.log('Recargando datos del perfil:', data);
+      setProfileData(data);
+      setEditProfileForm({
+        nombre: data.nombre || '',
+        apellido: data.apellido || '',
+        direccion: data.direccion || '',
+        telefono: data.telefono || '',
+        latitud: data.latitud?.toString() || '0',
+        longitud: data.longitud?.toString() || '0'
+      });
+    } catch (error) {
+      console.error('Error al recargar el perfil:', error);
+    }
   };
 
   // Función para manejar la actualización del perfil
@@ -111,68 +160,26 @@ const PaseadorDashboard = () => {
         apellido: editProfileForm.apellido.trim(),
         direccion: editProfileForm.direccion.trim(),
         telefono: editProfileForm.telefono.trim(),
-        latitud: 0,
-        longitud: 0
+        latitud: parseFloat(editProfileForm.latitud) || 0,
+        longitud: parseFloat(editProfileForm.longitud) || 0
       };
-
-      // Guardar los datos actuales antes de la actualización
-      const previousData = { ...profileData };
 
       // Intentar actualizar el perfil
       await updatePaseadorProfile(formData);
       
-      // Forzar una recarga de los datos del perfil
-      const refreshedProfile = await getPaseadorProfile();
-      
-      // Verificar si los datos realmente cambiaron
-      const hasChanged = 
-        refreshedProfile.nombre !== previousData.nombre ||
-        refreshedProfile.apellido !== previousData.apellido ||
-        refreshedProfile.direccion !== previousData.direccion ||
-        refreshedProfile.telefono !== previousData.telefono;
-
-      // Actualizar el estado con los datos recargados
-      setProfileData(refreshedProfile);
+      // Recargar los datos inmediatamente después de la actualización
+      await reloadProfileData();
       
       // Cerrar el modal
       setIsEditProfileModalOpen(false);
-
-      // Mostrar mensaje apropiado
-      if (hasChanged) {
-        toast.success('Perfil actualizado correctamente');
-      } else {
-        toast.warning('La actualización fue exitosa pero los cambios podrían no haberse guardado en la base de datos. Por favor, contacta al administrador.');
-      }
+      
+      toast.success('Perfil actualizado correctamente');
 
     } catch (error) {
       console.error('Error completo:', error);
       toast.error('Error al actualizar el perfil. Por favor, inténtalo de nuevo.');
     }
   };
-
-  // Efecto para mantener sincronizados los datos del perfil
-  useEffect(() => {
-    const loadProfileData = async () => {
-      if (activeTab === 1) {
-        try {
-          const data = await getPaseadorProfile();
-          console.log('Datos del perfil cargados:', data);
-          setProfileData(data);
-          setEditProfileForm({
-            nombre: data.nombre || '',
-            apellido: data.apellido || '',
-            direccion: data.direccion || '',
-            telefono: data.telefono || ''
-          });
-        } catch (error) {
-          console.error('Error al cargar el perfil:', error);
-          toast.error('Error al cargar los datos del perfil');
-        }
-      }
-    };
-
-    loadProfileData();
-  }, [activeTab]);
 
   // Función para manejar los cambios de estado de las reservas
   const handleReservaStatusChange = async (reservaId, action) => {
@@ -756,6 +763,34 @@ const PaseadorDashboard = () => {
                     required
                   />
                 </div>
+
+                <div>
+                  <label className="block mb-1 text-sm font-medium text-gray-700">
+                    Latitud
+                  </label>
+                  <input
+                    type="text"
+                    value={editProfileForm.latitud}
+                    onChange={(e) => setEditProfileForm({...editProfileForm, latitud: e.target.value})}
+                    className="w-full p-2 border rounded-md"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block mb-1 text-sm font-medium text-gray-700">
+                    Longitud
+                  </label>
+                  <input
+                    type="text"
+                    value={editProfileForm.longitud}
+                    onChange={(e) => setEditProfileForm({...editProfileForm, longitud: e.target.value})}
+                    className="w-full p-2 border rounded-md"
+                    required
+                  />
+                </div>
+                
+                
               </div>
 
               <div className="flex justify-end gap-4 mt-6">
