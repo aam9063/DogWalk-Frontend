@@ -142,7 +142,7 @@ const Services = () => {
           <div 
             className="w-full h-full bg-cover"
             style={{ 
-              backgroundImage: 'url(public/imgs/dogs-5282275_1280.jpg)',
+              backgroundImage: 'url(/imgs/dogs-5282275_1280.jpg)',
               backgroundPosition: 'center 40%',
             }}
           />
@@ -200,7 +200,7 @@ const Services = () => {
                 transition={{ duration: 0.3 }}
               >
                 <img 
-                  src="public/imgs/dogs-1284238_1280.jpg" 
+                  src="/imgs/dogs-1284238_1280.jpg" 
                   alt="Perro durmiendo cómodamente" 
                   className="object-cover w-full h-full"
                 />
@@ -223,7 +223,7 @@ const Services = () => {
                   transition={{ duration: 0.3 }}
                 >
                   <img 
-                    src="public/imgs/dog-walker-9141143_1280.jpg" 
+                    src="/imgs/dog-walker-9141143_1280.jpg" 
                     alt="Perros en guardería de día" 
                     className="object-cover w-full h-full"
                   />
@@ -262,7 +262,7 @@ const Services = () => {
                 transition={{ duration: 0.3 }}
               >
                 <img 
-                  src="public/imgs/three-dogs-2975649_1280.jpg" 
+                  src="/imgs/three-dogs-2975649_1280.jpg" 
                   alt="Cuidador paseando perros" 
                   className="object-cover w-full h-full"
                 />
@@ -289,7 +289,7 @@ const Services = () => {
                 >
                   <div className="flex items-center">
                     <motion.img 
-                      src="public/icons/Veterinarian2.svg" 
+                      src="/icons/Veterinarian2.svg" 
                       alt="Cobertura Veterinaria" 
                       className="w-6 h-6 mr-3"
                       animate={{ rotate: expandedBenefit === 'veterinaria' ? 360 : 0 }}
@@ -326,7 +326,7 @@ const Services = () => {
                 >
                   <div className="flex items-center">
                     <motion.img 
-                      src="public/icons/VerifiedAccount2.svg" 
+                      src="/icons/VerifiedAccount2.svg" 
                       alt="Cancelación Gratuita" 
                       className="w-6 h-6 mr-3"
                       animate={{ rotate: expandedBenefit === 'cancelacion' ? 360 : 0 }}
@@ -363,7 +363,7 @@ const Services = () => {
                 >
                   <div className="flex items-center">
                     <motion.img 
-                      src="public/icons/Apply2.svg" 
+                      src="/icons/Apply2.svg" 
                       alt="Cuidadores Verificados" 
                       className="w-6 h-6 mr-3"
                       animate={{ rotate: expandedBenefit === 'verificados' ? 360 : 0 }}
@@ -400,7 +400,7 @@ const Services = () => {
                 >
                   <div className="flex items-center">
                     <motion.img 
-                      src="public/icons/Support.svg" 
+                      src="/icons/ChatBubble2.svg" 
                       alt="Soporte y Ayuda" 
                       className="w-6 h-6 mr-3"
                       animate={{ rotate: expandedBenefit === 'soporte' ? 360 : 0 }}

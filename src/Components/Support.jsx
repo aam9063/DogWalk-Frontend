@@ -1,12 +1,14 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'motion/react';
 import FadeIn from './FadeIn';
 import TextAnimation from './TextAnimation';
+import ChatAssistant from './ChatAssistant';
 
 const Support = () => {
   const iconRef = useRef(null);
+  const [showChat, setShowChat] = useState(false);
 
   useEffect(() => {
     // Animar icono con GSAP - efecto de pulso suave
@@ -56,12 +58,21 @@ const Support = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <button className="bg-dog-green text-white px-8 py-3 rounded-md hover:bg-dog-light-green transition-colors font-medium">
+            <button 
+              onClick={() => setShowChat(true)}
+              className="bg-dog-green text-white px-8 py-3 rounded-md hover:bg-dog-light-green transition-colors font-medium"
+            >
               Iniciar chat
             </button>
           </motion.div>
         </FadeIn>
       </div>
+
+      {/* Asistente Virtual */}
+      <ChatAssistant 
+        externalShowChat={showChat} 
+        onClose={() => setShowChat(false)} 
+      />
     </section>
   );
 };

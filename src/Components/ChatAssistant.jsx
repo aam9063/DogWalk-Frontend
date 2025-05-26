@@ -5,8 +5,8 @@ import { FaTimes, FaPaperPlane } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import assistantService from '../services/assistantService';
 
-const ChatAssistant = () => {
-  const [showChat, setShowChat] = useState(false);
+const ChatAssistant = ({ externalShowChat, onClose }) => {
+  const [showChat, setShowChat] = useState(externalShowChat || false);
   const [messages, setMessages] = useState([
     { type: 'assistant', text: '¡Hola! Soy el asistente virtual de Dog Walk. ¿En qué puedo ayudarte?' }
   ]);
@@ -14,11 +14,20 @@ const ChatAssistant = () => {
   const [isLoading, setIsLoading] = useState(false);
   const chatRef = useRef(null);
   
+  // Determinar si el componente está siendo controlado externamente
+  const isExternallyControlled = externalShowChat !== undefined;
+  
   useEffect(() => {
     if (chatRef.current) {
       chatRef.current.scrollTop = chatRef.current.scrollHeight;
     }
   }, [messages]);
+
+  useEffect(() => {
+    if (isExternallyControlled) {
+      setShowChat(externalShowChat);
+    }
+  }, [externalShowChat, isExternallyControlled]);
 
   const handleSendMessage = async (e) => {
     e?.preventDefault();
@@ -53,7 +62,11 @@ const ChatAssistant = () => {
   };
 
   const toggleChat = () => {
-    setShowChat(!showChat);
+    const newState = !showChat;
+    setShowChat(newState);
+    if (!newState && onClose) {
+      onClose();
+    }
   };
 
   return (
@@ -149,15 +162,17 @@ const ChatAssistant = () => {
         )}
       </AnimatePresence>
 
-      {/* Toggle Button */}
-      <motion.button
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        onClick={toggleChat}
-        className="flex items-center justify-center w-12 h-12 p-2 text-xl text-white rounded-full shadow-md md:w-14 md:h-14 md:p-3 md:text-2xl bg-dog-green focus:outline-none"
-      >
-        <span role="img" aria-label="Asistente">🐶</span>
-      </motion.button>
+      {/* Toggle Button - Solo se muestra cuando no hay control externo */}
+      {!isExternallyControlled && !showChat && (
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={toggleChat}
+          className="flex items-center justify-center w-12 h-12 p-2 text-xl text-white rounded-full shadow-md md:w-14 md:h-14 md:p-3 md:text-2xl bg-dog-green focus:outline-none"
+        >
+          <span role="img" aria-label="Asistente">🐶</span>
+        </motion.button>
+      )}
     </div>
   );
 };

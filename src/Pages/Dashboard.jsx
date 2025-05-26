@@ -11,6 +11,23 @@ import { gsap } from 'gsap';
 import { FixedSizeList as List } from 'react-window';
 import { enviarValoracion } from '../Services/rankingService';
 
+// Función de utilidad para formatear fechas de manera segura
+const formatearFecha = (fecha) => {
+  try {
+    const date = new Date(fecha);
+    if (isNaN(date.getTime())) {
+      return 'Fecha no disponible';
+    }
+    return date.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  } catch {
+    return 'Fecha no disponible';
+  }
+};
+
 // Componente de carga para usar con Suspense
 const LoadingIndicator = () => (
   <div className="flex items-center justify-center min-h-screen">
@@ -896,7 +913,7 @@ const Dashboard = () => {
                               <div>
                                 <h4 className="text-lg font-medium">{reserva.nombrePaseador}</h4>
                                 <p className="text-sm text-gray-500">
-                                  Fecha: {new Date(reserva.fecha).toLocaleDateString()}
+                                  Fecha: {formatearFecha(reserva.fecha)}
                                 </p>
                               </div>
                               {reserva.valorada ? (
