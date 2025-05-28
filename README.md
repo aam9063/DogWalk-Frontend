@@ -17,6 +17,8 @@ DogWalk es una plataforma moderna que conecta a dueños de perros con cuidadores
 - 🛒 Tienda integrada de productos para mascotas
 - 📅 Gestión de reservas y disponibilidad
 - 🔐 Sistema de autenticación y autorización
+- 🤖 Asistente virtual inteligente para ayuda y soporte
+
 
 ## 🚀 Tecnologías
 
