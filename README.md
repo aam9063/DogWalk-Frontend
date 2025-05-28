@@ -20,7 +20,7 @@ DogWalk es una plataforma moderna que conecta a dueños de perros con cuidadores
 
 ## 🚀 Tecnologías
 
-- React 18
+- React 19
 - TailwindCSS
 - Framer Motion
 - Mapbox GL
