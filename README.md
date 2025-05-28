@@ -1,12 +1,108 @@
-# React + Vite
+# 🐾 DogWalk - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+[![React](https://img.shields.io/badge/React-19.0.0-blue.svg)](https://reactjs.org/)
+[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.x-38B2AC.svg)](https://tailwindcss.com/)
+[![Vite](https://img.shields.io/badge/Vite-Latest-646CFF.svg)](https://vitejs.dev/)
 
-Currently, two official plugins are available:
+## 📝 Descripción
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+DogWalk es una plataforma moderna que conecta a dueños de perros con cuidadores profesionales. Ofrece servicios de paseo, alojamiento y guardería, junto con una tienda integrada de productos para mascotas.
 
-## Expanding the ESLint configuration
+## ✨ Características Principales
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- 🔍 Búsqueda avanzada de cuidadores con filtros
+- 🗺️ Integración con mapas para localizar cuidadores
+- 💬 Sistema de mensajería en tiempo real
+- ⭐ Sistema de valoraciones y reseñas
+- 🛒 Tienda integrada de productos para mascotas
+- 📅 Gestión de reservas y disponibilidad
+- 🔐 Sistema de autenticación y autorización
+
+## 🚀 Tecnologías
+
+- React 18
+- TailwindCSS
+- Framer Motion
+- Mapbox GL
+- Zustand
+- React Router
+- GSAP
+
+## 📦 Instalación
+
+1. Clona el repositorio:
+\`\`\`bash
+git clone https://github.com/aam9063/DogWalk-Frontend.git
+\`\`\`
+
+2. Instala las dependencias:
+\`\`\`bash
+cd DogWalk-Frontend
+npm install
+\`\`\`
+
+3. Crea un archivo .env en la raíz del proyecto y configura las variables de entorno necesarias:
+\`\`\`env
+VITE_API_URL=tu_url_api
+VITE_MAPBOX_TOKEN=tu_token_mapbox
+\`\`\`
+
+4. Inicia el servidor de desarrollo:
+\`\`\`bash
+npm run dev
+\`\`\`
+
+## 🔧 Scripts Disponibles
+
+- \`npm run dev\`: Inicia el servidor de desarrollo
+- \`npm run build\`: Construye la aplicación para producción
+- \`npm run preview\`: Previsualiza la versión de producción
+- \`npm run lint\`: Ejecuta el linter
+- \`npm run test\`: Ejecuta los tests
+
+## 📱 Capturas de Pantalla
+
+| Página de inicio | Búsqueda de cuidadores |
+|-----------------|------------------------|
+| ![Home](./public/screenshots/home.png) | ![Search](./public/screenshots/search.png) |
+
+| Perfil de cuidador | Tienda |
+|-------------------|--------|
+| ![Profile](./public/screenshots/profile.png) | ![Shop](./public/screenshots/shop.png) |
+
+### 📱 Vista móvil
+
+| Home móvil | Búsqueda móvil |
+|------------|----------------|
+| ![Mobile Home](./public/screenshots/mobile-home.png) | ![Mobile Search](./public/screenshots/mobile-search.png) |
+
+## 🌐 Demo en Vivo
+
+[Enlace a tu demo en vivo]
+
+## 📄 Documentación
+
+Para más información sobre la arquitectura y funcionamiento del proyecto, consulta nuestra [documentación técnica](link-a-tu-documentacion).
+
+## 🤝 Contribuir
+
+Las contribuciones son bienvenidas. 
+
+## 📝 Licencia
+
+Este proyecto está bajo la Licencia MIT - mira el archivo [LICENSE.md](LICENSE.md) para más detalles.
+
+## 👥 Autores
+
+- Tu Nombre - [Tu GitHub](https://github.com/tu-usuario)
+
+
+
+## 📞 Contacto
+
+- Email: albert9063@email.com
+- LinkedIn: [Albert Alarcón Martínez](www.linkedin.com/in/albert-alarcón-martínez-04044a51)
+- Portfolio: [](https://codewithalbert.netlify.app/)
+
+---
+⌨️ con ❤️ por [Albert](https://github.com/aam9063)
