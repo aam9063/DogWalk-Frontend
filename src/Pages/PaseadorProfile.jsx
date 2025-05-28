@@ -383,11 +383,11 @@ const PaseadorProfile = () => {
       // Establecer la hora y minutos
       fechaServicioDate.setHours(parseInt(hours));
       fechaServicioDate.setMinutes(parseInt(minutes));
-      fechaServicioDate.setSeconds(5); // Establecemos segundos fijos
-      fechaServicioDate.setMilliseconds(941); // Establecemos milisegundos fijos
+      fechaServicioDate.setSeconds(0); // Establecemos segundos a 0
+      fechaServicioDate.setMilliseconds(0); // Establecemos milisegundos a 0
       
       // Asegurarnos de que la fecha está en el formato correcto
-      const fechaISO = fechaServicioDate.toISOString().replace('Z', '0000');
+      const fechaISO = fechaServicioDate.toISOString();
       
       console.log('Fecha construida:', {
         original: selectedDate,

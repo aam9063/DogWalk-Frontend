@@ -11,61 +11,67 @@ const HowItWorks = () => {
   const cardsRef = useRef(null);
 
   useEffect(() => {
-    const section = sectionRef.current;
-    const title = titleRef.current;
-    const cards = cardsRef.current.children;
-
-    // Animación del título
-    gsap.fromTo(
-      title,
-      { opacity: 0, y: -20 },
-      { 
-        opacity: 1, 
-        y: 0, 
-        duration: 0.6, 
+    const ctx = gsap.context(() => {
+      // Timeline principal para mejor sincronización y rendimiento
+      const tl = gsap.timeline({
         scrollTrigger: {
-          trigger: section,
-          start: "top 85%",
-          once: true
-        }
-      }
-    );
-
-    // Animación para cada tarjeta de pasos
-    gsap.fromTo(
-      cards,
-      { opacity: 0, y: 20 },
-      { 
-        opacity: 1, 
-        y: 0, 
-        duration: 0.5, 
-        stagger: 0.15,
-        ease: "power2.out",
-        delay: 0.2,
-        scrollTrigger: {
-          trigger: section,
+          trigger: sectionRef.current,
           start: "top 80%",
-          once: true
+          end: "top 20%",
+          toggleActions: "play none none reverse",
+          markers: false,
         }
-      }
-    );
+      });
 
-    // Limpieza
+      // Animación del título con mejor rendimiento
+      tl.from(titleRef.current, {
+        y: 30,
+        opacity: 0,
+        duration: 0.8,
+        ease: "power3.out"
+      });
+
+      // Animación de las tarjetas con mejor rendimiento y sincronización
+      tl.from(cardsRef.current.children, {
+        y: 50,
+        opacity: 0,
+        duration: 0.6,
+        stagger: {
+          amount: 0.4,
+          ease: "power2.out"
+        },
+        ease: "power2.out"
+      }, "-=0.4"); // Superposición suave con la animación del título
+    }, sectionRef);
+
+    // Limpieza mejorada
     return () => {
-      ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+      ctx.revert(); // Limpia todas las animaciones y ScrollTriggers de este contexto
     };
   }, []);
 
   return (
-    <section ref={sectionRef} className="py-16 bg-white">
+    <section 
+      ref={sectionRef} 
+      className="py-16 bg-white"
+      style={{ willChange: 'transform' }} // Optimización de rendimiento
+    >
       <div className="container px-4 mx-auto">
-        <h2 ref={titleRef} className="mb-12 text-3xl text-center font-adlam">
+        <h2 
+          ref={titleRef} 
+          className="mb-12 text-3xl text-center font-adlam"
+          style={{ willChange: 'transform, opacity' }}
+        >
           ¿Cómo funciona Dog Walk?
         </h2>
 
-        <div ref={cardsRef} className="grid grid-cols-1 gap-8 md:grid-cols-3">
+        <div 
+          ref={cardsRef} 
+          className="grid grid-cols-1 gap-8 md:grid-cols-3"
+          style={{ willChange: 'transform' }}
+        >
           {/* Paso 1 */}
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center" style={{ willChange: 'transform, opacity' }}>
             <div className="flex items-center justify-center w-12 h-12 mb-4 text-white rounded-full bg-dog-green">
               <span className="text-xl font-bold">1</span>
             </div>
@@ -76,7 +82,7 @@ const HowItWorks = () => {
           </div>
 
           {/* Paso 2 */}
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center" style={{ willChange: 'transform, opacity' }}>
             <div className="flex items-center justify-center w-12 h-12 mb-4 text-white rounded-full bg-dog-green">
               <span className="text-xl font-bold">2</span>
             </div>
@@ -88,7 +94,7 @@ const HowItWorks = () => {
           </div>
 
           {/* Paso 3 */}
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center" style={{ willChange: 'transform, opacity' }}>
             <div className="flex items-center justify-center w-12 h-12 mb-4 text-white rounded-full bg-dog-green">
               <span className="text-xl font-bold">3</span>
             </div>

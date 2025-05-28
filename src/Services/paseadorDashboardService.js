@@ -131,3 +131,17 @@ export const completarReserva = async (reservaId) => {
     throw error;
   }
 };
+
+// Crear slots de disponibilidad horaria
+export const crearDisponibilidadHoraria = async (disponibilidad) => {
+  try {
+    const response = await sendRequest('/api/DisponibilidadHoraria', {
+      method: 'POST',
+      body: disponibilidad
+    });
+    return response;
+  } catch (error) {
+    console.error('Error al crear disponibilidad horaria:', error);
+    throw error;
+  }
+};

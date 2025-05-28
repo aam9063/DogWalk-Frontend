@@ -60,6 +60,55 @@ const Navbar = forwardRef((props, ref) => {
     }
   }, [isSearchOpen]);
   
+  const searchOptions = [
+    {
+      keywords: ['cuidador', 'cuidadores', 'paseador', 'paseadores', 'paseo', 'paseos'],
+      route: '/buscar-cuidadores',
+      title: 'Buscar Cuidadores'
+    },
+    {
+      keywords: ['tienda', 'productos', 'accesorios', 'comida', 'juguetes'],
+      route: '/tienda',
+      title: 'Tienda'
+    },
+    {
+      keywords: ['servicios', 'servicio', 'alojamiento', 'guarderia'],
+      route: '/servicios',
+      title: 'Servicios'
+    },
+    {
+      keywords: ['perfil', 'cuenta', 'mi cuenta', 'configuracion'],
+      route: '/perfil',
+      title: 'Mi Perfil'
+    }
+  ];
+
+  const [searchResults, setSearchResults] = useState([]);
+  const [showResults, setShowResults] = useState(false);
+
+  const handleSearchChange = (e) => {
+    const query = e.target.value.toLowerCase();
+    setSearchQuery(query);
+    
+    if (query.length > 0) {
+      const results = searchOptions.filter(option =>
+        option.keywords.some(keyword => keyword.includes(query))
+      );
+      setSearchResults(results);
+      setShowResults(true);
+    } else {
+      setSearchResults([]);
+      setShowResults(false);
+    }
+  };
+
+  const handleResultClick = (route) => {
+    navigate(route);
+    setSearchQuery('');
+    setShowResults(false);
+    closeSearch();
+  };
+
   // Manejar la búsqueda cuando se presiona Enter
   const handleSearch = useCallback((e) => {
     e.preventDefault();
@@ -161,7 +210,7 @@ const Navbar = forwardRef((props, ref) => {
   const [isAuthPopupOpen, setIsAuthPopupOpen] = useState(false);
   const [cart, setCart] = useState(null);
 
-  const fetchCart = async () => {
+  const fetchCart = useCallback(async () => {
     if (!isAuthenticated) return;
     
     try {
@@ -170,11 +219,11 @@ const Navbar = forwardRef((props, ref) => {
     } catch (error) {
       console.error('Error al obtener el carrito:', error);
     }
-  };
+  }, [isAuthenticated]);
 
   useEffect(() => {
     fetchCart();
-  }, [isAuthenticated]);
+  }, [fetchCart]);
 
   const handleCartClick = () => {
     if (!isAuthenticated) {
@@ -280,25 +329,62 @@ const Navbar = forwardRef((props, ref) => {
                   exit={{ opacity: 0, y: -10, scale: 0.95 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <form onSubmit={handleSearch} className="flex items-center border-b border-gray-200">
-                    <input
-                      type="text"
-                      className="w-full px-4 py-2 focus:outline-none"
-                      placeholder="Buscar..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      ref={searchInputRef}
-                    />
-                    <motion.button 
-                      type="submit" 
-                      className="p-2 text-dog-green hover:text-dog-dark"
-                      aria-label="Realizar búsqueda"
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                    >
-                      <FaSearch />
-                    </motion.button>
-                  </form>
+                  <div className="flex flex-col">
+                    <form onSubmit={handleSearch} className="flex items-center border-b border-gray-200">
+                      <input
+                        type="text"
+                        className="w-full px-4 py-2 focus:outline-none"
+                        placeholder="Buscar..."
+                        value={searchQuery}
+                        onChange={handleSearchChange}
+                        ref={searchInputRef}
+                      />
+                      <motion.button 
+                        type="submit" 
+                        className="p-2 text-dog-green hover:text-dog-dark"
+                        aria-label="Realizar búsqueda"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                      >
+                        <FaSearch />
+                      </motion.button>
+                    </form>
+
+                    {/* Resultados de búsqueda */}
+                    {showResults && searchResults.length > 0 && (
+                      <motion.div
+                        className="overflow-y-auto max-h-60"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                      >
+                        {searchResults.map((result, index) => (
+                          <motion.button
+                            key={index}
+                            className="w-full px-4 py-2 text-left transition-colors hover:bg-gray-100"
+                            onClick={() => handleResultClick(result.route)}
+                            whileHover={{ backgroundColor: 'rgba(0,0,0,0.05)' }}
+                          >
+                            <span className="block text-sm font-medium text-gray-900">{result.title}</span>
+                            <span className="block text-xs text-gray-500">
+                              {result.keywords.slice(0, 3).join(', ')}...
+                            </span>
+                          </motion.button>
+                        ))}
+                      </motion.div>
+                    )}
+
+                    {/* Mensaje cuando no hay resultados */}
+                    {showResults && searchResults.length === 0 && searchQuery && (
+                      <motion.div
+                        className="p-4 text-center text-gray-500"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                      >
+                        No se encontraron resultados
+                      </motion.div>
+                    )}
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -385,7 +471,7 @@ const Navbar = forwardRef((props, ref) => {
                     className="w-full px-4 py-2 focus:outline-none"
                     placeholder="Buscar..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={handleSearchChange}
                   />
                   <button 
                     type="submit" 

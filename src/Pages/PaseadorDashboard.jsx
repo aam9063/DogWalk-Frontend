@@ -22,13 +22,15 @@ import {
   FaMapMarkerAlt,
   FaDog,
   FaHome,
-  FaClipboardList
+  FaClipboardList,
+  FaCalendarAlt
 } from 'react-icons/fa';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 // eslint-disable-next-line
 import { motion } from 'framer-motion';
 import useAuthStore from '../store/authStore';
 import Navbar from '../Components/Navbar';
+import DisponibilidadHoraria from '../Components/DisponibilidadHoraria';
 import { toast } from 'react-toastify';
 
 const PaseadorDashboard = () => {
@@ -403,6 +405,15 @@ const PaseadorDashboard = () => {
                       Valoraciones
                     </button>
                   </motion.li>
+                  <motion.li whileHover={{ x: 5 }} transition={{ duration: 0.2 }}>
+                    <button 
+                      className={`w-full flex items-center p-3 text-left rounded-md ${activeTab === 4 ? 'bg-dog-green text-white' : 'hover:bg-gray-100'}`}
+                      onClick={() => setActiveTab(4)}
+                    >
+                      <FaCalendarAlt className="mr-3" />
+                      Disponibilidad
+                    </button>
+                  </motion.li>
                 </ul>
               </nav>
             </div>
@@ -682,6 +693,15 @@ const PaseadorDashboard = () => {
                       </div>
                     )}
                   </div>
+                </>
+              )}
+
+              {activeTab === 4 && (
+                <>
+                  <h1 className="mb-8 text-2xl font-bold text-gray-900">
+                    Gestión de Disponibilidad
+                  </h1>
+                  <DisponibilidadHoraria />
                 </>
               )}
             </div>

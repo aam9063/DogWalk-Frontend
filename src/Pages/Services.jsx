@@ -433,7 +433,7 @@ const Services = () => {
       <section className="py-16 bg-white">
         <FadeIn direction="up">
           <div className="container px-4 mx-auto text-center">
-            <h2 className="mb-4 text-3xl font-bold md:text-4xl font-adlam">Listo para comenzar?</h2>
+            <h2 className="mb-4 text-3xl font-bold md:text-4xl font-adlam">¿Listo para comenzar?</h2>
             <p className="mb-8 text-lg text-gray-700">
               Encuentra al cuidador perfecto para tu perro hoy mismo.
             </p>
