@@ -36,21 +36,17 @@ git clone https://github.com/aam9063/DogWalk-Frontend.git
 \`\`\`
 
 2. Instala las dependencias:
-\`\`\`bash
+
 cd DogWalk-Frontend
 npm install
-\`\`\`
 
 3. Crea un archivo .env en la raíz del proyecto y configura las variables de entorno necesarias:
-\`\`\`env
+.env
 VITE_API_URL=tu_url_api
 VITE_MAPBOX_TOKEN=tu_token_mapbox
-\`\`\`
 
 4. Inicia el servidor de desarrollo:
-\`\`\`bash
 npm run dev
-\`\`\`
 
 ## 🔧 Scripts Disponibles
 
