@@ -260,8 +260,10 @@ const PaseadorProfile = () => {
           const horasDisponibles = data.dias.flatMap(dia => 
             dia.horas.map(hora => ({
               id: hora.id,
-              horaInicio: hora.fechaHora.split('T')[1],
-              horaFin: new Date(new Date(hora.fechaHora).getTime() + 3600000).toISOString().split('T')[1],
+              fechaHora: hora.fechaHora,
+              horaInicio: hora.fechaHora.split('T')[1].substring(0, 5),
+              horaFin: new Date(new Date(hora.fechaHora).getTime() + 3600000)
+                .toISOString().split('T')[1].substring(0, 5),
               estado: hora.estado
             }))
           );
@@ -383,17 +385,20 @@ const PaseadorProfile = () => {
       // Establecer la hora y minutos
       fechaServicioDate.setHours(parseInt(hours));
       fechaServicioDate.setMinutes(parseInt(minutes));
-      fechaServicioDate.setSeconds(0); // Establecemos segundos a 0
-      fechaServicioDate.setMilliseconds(0); // Establecemos milisegundos a 0
+      fechaServicioDate.setSeconds(5); // Añadimos segundos como en el ejemplo
+      fechaServicioDate.setMilliseconds(941); // Añadimos milisegundos como en el ejemplo
       
-      // Asegurarnos de que la fecha está en el formato correcto
+      // Formatear la fecha al formato esperado por el backend
       const fechaISO = fechaServicioDate.toISOString();
       
+      // Log para debugging
       console.log('Fecha construida:', {
         original: selectedDate,
         horaInicio: selectedFechaHora.horaInicio,
         fechaFinal: fechaServicioDate,
-        fechaISO: fechaISO
+        fechaISO: fechaISO,
+        timeZoneOffset: fechaServicioDate.getTimezoneOffset(),
+        selectedFechaHora
       });
       
       if (isNaN(fechaServicioDate.getTime())) {
@@ -411,7 +416,7 @@ const PaseadorProfile = () => {
       };
 
       // Log detallado de los datos de la reserva
-      console.log('Datos de la reserva a enviar:', reservaData);
+      console.log('Datos de la reserva a enviar:', JSON.stringify(reservaData, null, 2));
 
       setLoadingReserva(true);
       await reservaService.crearReserva(reservaData);
@@ -426,8 +431,10 @@ const PaseadorProfile = () => {
         const horasDisponibles = nuevaDisponibilidad.dias.flatMap(dia => 
           dia.horas.map(hora => ({
             id: hora.id,
-            horaInicio: hora.fechaHora.split('T')[1],
-            horaFin: new Date(new Date(hora.fechaHora).getTime() + 3600000).toISOString().split('T')[1],
+            fechaHora: hora.fechaHora,
+            horaInicio: hora.fechaHora.split('T')[1].substring(0, 5),
+            horaFin: new Date(new Date(hora.fechaHora).getTime() + 3600000)
+              .toISOString().split('T')[1].substring(0, 5),
             estado: hora.estado
           }))
         );
