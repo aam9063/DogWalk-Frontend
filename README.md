@@ -90,13 +90,13 @@ Este proyecto está bajo la Licencia MIT - mira el archivo [LICENSE.md](LICENSE.
 
 ## 👥 Autores
 
-- Tu Nombre - [Tu GitHub](https://github.com/tu-usuario)
+- Tu Nombre - [Albert](https://github.com/aam9063)
 
 
 
 ## 📞 Contacto
 
-- Email: albert9063@email.com
+- Email: albert9063@gmail.com
 - LinkedIn: [Albert Alarcón Martínez](www.linkedin.com/in/albert-alarcón-martínez-04044a51)
 - Portfolio: [AlbertDev](https://codewithalbert.netlify.app/)
 
