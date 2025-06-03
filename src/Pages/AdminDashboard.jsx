@@ -203,14 +203,31 @@ const AdminDashboard = () => {
 
   const handleUpdateArticle = async () => {
     try {
-      // Validaciones
+      // Validaciones más estrictas
       if (!articleForm.nombre || articleForm.nombre.trim() === '') {
         toast.error('El nombre es requerido');
         return;
       }
       
-      if (articleForm.precio < 0) {
-        toast.error('El precio no puede ser negativo');
+      if (!articleForm.descripcion || articleForm.descripcion.trim() === '') {
+        toast.error('La descripción es requerida');
+        return;
+      }
+
+      const precio = Number(articleForm.precio);
+      if (isNaN(precio) || precio < 0) {
+        toast.error('El precio debe ser un número válido y no puede ser negativo');
+        return;
+      }
+
+      const categoria = Number(articleForm.categoria);
+      console.log('Validando categoría:', {
+        original: articleForm.categoria,
+        convertida: categoria
+      });
+
+      if (isNaN(categoria) || categoria < 0) {
+        toast.error('Debes seleccionar una categoría válida');
         return;
       }
 
@@ -218,22 +235,25 @@ const AdminDashboard = () => {
       const formattedArticle = {
         nombre: articleForm.nombre.trim(),
         descripcion: articleForm.descripcion.trim(),
-        precio: Number(articleForm.precio),
-        categoria: Number(articleForm.categoria),
+        precio: precio,
+        categoria: categoria,
         imagenes: Array.isArray(articleForm.imagenes) ? 
           articleForm.imagenes.filter(url => url && typeof url === 'string' && url.trim() !== '') : 
           []
       };
 
-      console.log('Enviando datos al servidor:', formattedArticle);
+      console.log('ID del artículo:', selectedArticle.id);
+      console.log('Datos del formulario:', articleForm);
+      console.log('Datos formateados para enviar:', formattedArticle);
 
       await articleService.update(selectedArticle.id, formattedArticle);
       toast.success('Artículo actualizado correctamente');
       setIsArticleModalOpen(false);
       loadArticlesByCategory();
     } catch (error) {
-      console.error('Error al actualizar artículo:', error);
-      toast.error('Error al actualizar el artículo: ' + (error.message || 'Error desconocido'));
+      console.error('Error detallado al actualizar artículo:', error);
+      const errorMessage = error.message || 'Error desconocido';
+      toast.error(`Error al actualizar el artículo: ${errorMessage}`);
     }
   };
 
@@ -812,13 +832,17 @@ const AdminDashboard = () => {
                                   <div className="flex items-center justify-center space-x-2">
                                     <button
                                       onClick={() => {
+                                        const categoriaNum = Number(article.categoria);
+                                        console.log('Artículo seleccionado para editar:', {
+                                          ...article,
+                                          categoria: categoriaNum
+                                        });
                                         setSelectedArticle(article);
                                         setArticleForm({
-                                          nombre: article.nombre,
-                                          descripcion: article.descripcion,
-                                          precio: article.precio,
-                                          stock: article.stock,
-                                          categoria: article.categoria,
+                                          nombre: article.nombre || '',
+                                          descripcion: article.descripcion || '',
+                                          precio: article.precio || 0,
+                                          categoria: categoriaNum,
                                           imagenes: article.imagenes || []
                                         });
                                         setIsArticleModalOpen(true);
@@ -974,10 +998,21 @@ const AdminDashboard = () => {
                   </label>
                   <select
                     value={articleForm.categoria}
-                    onChange={(e) => setArticleForm({...articleForm, categoria: parseInt(e.target.value)})}
+                    onChange={(e) => {
+                      const categoriaNum = Number(e.target.value);
+                      console.log('Valor seleccionado:', {
+                        original: e.target.value,
+                        convertido: categoriaNum
+                      });
+                      setArticleForm({
+                        ...articleForm,
+                        categoria: categoriaNum
+                      });
+                    }}
                     className="w-full p-2 border rounded-md"
                     required
                   >
+                    <option value="">Selecciona una categoría</option>
                     {articleService.getCategorias().map((cat) => (
                       <option key={cat.id} value={cat.id}>
                         {cat.nombre}

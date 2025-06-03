@@ -102,29 +102,43 @@ const articleService = {
   // Actualizar un artículo
   update: async (id, updateArticuloDto) => {
     try {
-      console.log('Datos enviados al servidor:', {
-        nombre: updateArticuloDto.nombre,
-        descripcion: updateArticuloDto.descripcion,
-        precio: Number(updateArticuloDto.precio),
-        categoria: Number(updateArticuloDto.categoria),
-        imagenes: updateArticuloDto.imagenes
-      });
+      // Asegurarse de que los datos están en el formato correcto
+      const formattedData = {
+        nombre: String(updateArticuloDto.nombre || '').trim(),
+        descripcion: String(updateArticuloDto.descripcion || '').trim(),
+        precio: parseFloat(updateArticuloDto.precio) || 0,
+        categoria: parseInt(updateArticuloDto.categoria),
+        imagenes: Array.isArray(updateArticuloDto.imagenes) ? 
+          updateArticuloDto.imagenes.filter(url => url && typeof url === 'string' && url.trim() !== '') : 
+          []
+      };
 
-      await fetcher(`/api/Articulo/${id}`, {
+      console.log('ID del artículo:', id);
+      console.log('Datos formateados para enviar:', formattedData);
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/Articulo/${id}`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify({
-          nombre: updateArticuloDto.nombre,
-          descripcion: updateArticuloDto.descripcion,
-          precio: Number(updateArticuloDto.precio),
-          categoria: Number(updateArticuloDto.categoria),
-          imagenes: updateArticuloDto.imagenes
-        })
+        body: JSON.stringify(formattedData)
       });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response:', {
+          status: response.status,
+          statusText: response.statusText,
+          body: errorText
+        });
+        throw new Error(`Error al actualizar: ${errorText}`);
+      }
+
+      const data = await response.text();
+      return data ? JSON.parse(data) : null;
     } catch (error) {
-      console.error('Error al actualizar artículo:', error);
+      console.error('Error detallado al actualizar artículo:', error);
       throw error;
     }
   },
