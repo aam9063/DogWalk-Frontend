@@ -38,8 +38,16 @@ export const fetcher = async (url, options = {}) => {
       error.status = response.status;
       throw error;
     }
+
+    // Verificar si hay contenido antes de intentar parsear JSON
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      const text = await response.text();
+      return text ? JSON.parse(text) : null;
+    }
     
-    return response.json();
+    return null; // Retornar null para respuestas no-JSON o vacías
+    
   } catch (error) {
     console.error('Error en la petición al backend:', error);
     throw error;

@@ -111,6 +111,8 @@ const Login = () => {
       setTimeout(() => {
         if (user?.rol === 'Paseador') {
           navigate('/paseador/dashboard', { replace: true });
+        } else if (user?.rol === 'Administrador') {
+          navigate('/admin/dashboard', { replace: true });
         } else {
           navigate('/dashboard', { replace: true });
         }

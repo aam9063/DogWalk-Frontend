@@ -1,4 +1,4 @@
-import { fetcher } from './api';
+import { fetcher, sendRequest } from './api';
 
 const articleService = {
   // Obtener todos los artículos con opciones de filtrado y paginación
@@ -16,8 +16,7 @@ const articleService = {
     if (options.ascending !== undefined) queryParams.append('ascending', options.ascending);
     
     // Filtrado por categoría
-    if (options.categoria) {
-      // Si es un string con formato "1,2,3" (múltiples categorías) o un solo valor
+    if (options.categoria !== undefined) {
       queryParams.append('categoria', options.categoria);
     }
     
@@ -27,13 +26,7 @@ const articleService = {
       return response;
     } catch (error) {
       console.error("Error al obtener artículos:", error);
-      return {
-        items: [],
-        totalItems: 0,
-        totalPaginas: 0,
-        paginaActual: 0,
-        elementosPorPagina: 0
-      };
+      throw error;
     }
   },
   
@@ -60,7 +53,7 @@ const articleService = {
       return response;
     } catch (error) {
       console.error(`Error al obtener el artículo con ID ${id}:`, error);
-      return null;
+      throw error;
     }
   },
   
@@ -76,6 +69,112 @@ const articleService = {
       { id: 5, nombre: 'Salud' },
       { id: 6, nombre: 'Ropa' }
     ];
+  },
+
+  // Crear un nuevo artículo
+  create: async (createArticuloDto) => {
+    try {
+      const response = await fetcher('/api/Articulo', {
+        method: 'POST',
+        body: JSON.stringify(createArticuloDto)
+      });
+      return response;
+    } catch (error) {
+      console.error('Error al crear artículo:', error);
+      throw error;
+    }
+  },
+
+  // Crear múltiples artículos
+  createBatch: async (createArticuloDtos) => {
+    try {
+      const response = await fetcher('/api/Articulo/batch', {
+        method: 'POST',
+        body: JSON.stringify(createArticuloDtos)
+      });
+      return response;
+    } catch (error) {
+      console.error('Error al crear artículos en lote:', error);
+      throw error;
+    }
+  },
+
+  // Actualizar un artículo
+  update: async (id, updateArticuloDto) => {
+    try {
+      console.log('Datos enviados al servidor:', {
+        nombre: updateArticuloDto.nombre,
+        descripcion: updateArticuloDto.descripcion,
+        precio: Number(updateArticuloDto.precio),
+        categoria: Number(updateArticuloDto.categoria),
+        imagenes: updateArticuloDto.imagenes
+      });
+
+      await fetcher(`/api/Articulo/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          nombre: updateArticuloDto.nombre,
+          descripcion: updateArticuloDto.descripcion,
+          precio: Number(updateArticuloDto.precio),
+          categoria: Number(updateArticuloDto.categoria),
+          imagenes: updateArticuloDto.imagenes
+        })
+      });
+    } catch (error) {
+      console.error('Error al actualizar artículo:', error);
+      throw error;
+    }
+  },
+
+  // Eliminar un artículo
+  delete: async (id) => {
+    try {
+      console.log('Eliminando artículo:', id);
+      
+      await sendRequest(`/api/Articulo/${id}`, {
+        method: 'DELETE'
+      });
+    } catch (error) {
+      console.error('Error al eliminar artículo:', error);
+      throw error;
+    }
+  },
+
+  // Actualizar stock de un artículo
+  updateStock: async (id, cantidad) => {
+    try {
+      console.log('Actualizando stock:', { id, cantidad });
+      
+      await sendRequest(`/api/Articulo/${id}/stock`, {
+        method: 'PATCH',
+        body: cantidad // Enviamos directamente el incremento/decremento
+      });
+    } catch (error) {
+      console.error('Error al actualizar stock:', error);
+      throw error;
+    }
+  },
+
+  // Obtener artículos por categoría
+  getByCategoria: async (categoria, options = {}) => {
+    const queryParams = new URLSearchParams();
+    
+    if (options.pageNumber) queryParams.append('pageNumber', options.pageNumber);
+    if (options.pageSize) queryParams.append('pageSize', options.pageSize);
+    if (options.sortBy) queryParams.append('sortBy', options.sortBy);
+    if (options.ascending !== undefined) queryParams.append('ascending', options.ascending);
+    
+    const queryString = queryParams.toString();
+    try {
+      const response = await fetcher(`/api/Articulo/categoria/${categoria}${queryString ? `?${queryString}` : ''}`);
+      return response;
+    } catch (error) {
+      console.error('Error al obtener artículos por categoría:', error);
+      throw error;
+    }
   }
 };
 

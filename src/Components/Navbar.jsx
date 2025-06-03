@@ -169,6 +169,8 @@ const Navbar = forwardRef((props, ref) => {
   const goToDashboard = useCallback(() => {
     if (user?.rol === 'Paseador') {
       navigate('/paseador/dashboard');
+    } else if (user?.rol === 'Administrador') {
+      navigate('/admin/dashboard');
     } else {
       navigate('/dashboard');
     }

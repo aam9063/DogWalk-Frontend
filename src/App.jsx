@@ -11,6 +11,7 @@ import DSADisclosure from './Pages/DSADisclosure'
 import Login from './Pages/Login'
 import Dashboard from './Pages/Dashboard'
 import PaseadorDashboard from './Pages/PaseadorDashboard'
+import AdminDashboard from './Pages/AdminDashboard'
 import SearchCaregivers from './Pages/SearchCaregivers'
 import Shop from './Pages/Shop'
 import ProductDetail from './Pages/ProductDetail'
@@ -53,9 +54,14 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   // Solo verificar roles si se especificaron roles permitidos
   if (allowedRoles.length > 0 && !allowedRoles.includes(user.rol)) {
     // Redirigir al dashboard correspondiente según el rol
-    return user.rol === 'Paseador' 
-      ? <Navigate to="/paseador/dashboard" replace />
-      : <Navigate to="/dashboard" replace />;
+    switch (user.rol) {
+      case 'Paseador':
+        return <Navigate to="/paseador/dashboard" replace />;
+      case 'Administrador':
+        return <Navigate to="/admin/dashboard" replace />;
+      default:
+        return <Navigate to="/dashboard" replace />;
+    }
   }
   
   // Si está autenticado y tiene el rol adecuado (o no se requieren roles), mostrar los hijos
@@ -104,6 +110,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['Paseador']}>
                 <PaseadorDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin/dashboard" 
+            element={
+              <ProtectedRoute allowedRoles={['Administrador']}>
+                <AdminDashboard />
               </ProtectedRoute>
             } 
           />
