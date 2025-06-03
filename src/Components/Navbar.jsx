@@ -7,7 +7,6 @@ import useAuthStore from '../store/authStore';
 import { motion, AnimatePresence } from 'motion/react';
 import { gsap } from 'gsap';
 import CartDrawer from './Cart/CartDrawer';
-import cartService from '../Services/cartService';
 import AuthPopup from './Common/AuthPopup';
 import useCartStore from '../store/cartStore';
 
@@ -34,7 +33,12 @@ const useUserMenuStore = create((set) => ({
 
 const Navbar = forwardRef((props, ref) => {
   const navigate = useNavigate();
-  const { isOpen: isCartOpen, toggle: toggleCart } = useCartStore();
+  const { 
+    isOpen: isCartOpen, 
+    toggle: toggleCart, 
+    cart, 
+    updateCart 
+  } = useCartStore();
   const { isOpen: isSearchOpen, toggle: toggleSearch, close: closeSearch } = useSearchStore();
   const { isOpen: isMobileMenuOpen, toggle: toggleMobileMenu, close: closeMobileMenu } = useMobileMenuStore();
   const { isOpen: isUserMenuOpen, toggle: toggleUserMenu, close: closeUserMenu } = useUserMenuStore();
@@ -176,6 +180,13 @@ const Navbar = forwardRef((props, ref) => {
     console.log('Estado de autenticación:', { isAuthenticated, user, token: localStorage.getItem('token') });
   }, [isAuthenticated, user]);
 
+  // Actualizar el carrito cuando cambie el estado de autenticación
+  useEffect(() => {
+    if (isAuthenticated) {
+      updateCart();
+    }
+  }, [isAuthenticated, updateCart]);
+
   // Referencia para el logo y navegación
   const logoRef = useRef(null);
   const navItemsRef = useRef(null);
@@ -208,23 +219,8 @@ const Navbar = forwardRef((props, ref) => {
   }, []);
 
   const [isAuthPopupOpen, setIsAuthPopupOpen] = useState(false);
-  const [cart, setCart] = useState(null);
 
-  const fetchCart = useCallback(async () => {
-    if (!isAuthenticated) return;
-    
-    try {
-      const cartData = await cartService.getCart();
-      setCart(cartData);
-    } catch (error) {
-      console.error('Error al obtener el carrito:', error);
-    }
-  }, [isAuthenticated]);
-
-  useEffect(() => {
-    fetchCart();
-  }, [fetchCart]);
-
+  // Modificar el handleCartClick
   const handleCartClick = () => {
     if (!isAuthenticated) {
       setIsAuthPopupOpen(true);
@@ -233,8 +229,9 @@ const Navbar = forwardRef((props, ref) => {
     toggleCart();
   };
 
+  // Exponer la función de actualización del carrito a través de la ref
   useImperativeHandle(ref, () => ({
-    fetchCart
+    updateCart
   }));
 
   return (
@@ -556,7 +553,7 @@ const Navbar = forwardRef((props, ref) => {
         isOpen={isCartOpen}
         onClose={() => toggleCart()}
         cart={cart}
-        onCartUpdate={fetchCart}
+        onCartUpdate={updateCart}
       />
 
       {/* Auth Popup */}

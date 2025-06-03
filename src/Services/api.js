@@ -1,14 +1,5 @@
 const API_URL = import.meta.env.VITE_API_URL;
 
-// Datos mock para desarrollo
-const MOCK_USER = {
-  userId: '1',
-  email: 'usuario@test.com',
-  nombre: 'Usuario',
-  apellido: 'Test',
-  rol: 'Usuario',
-  token: 'mock-token-123'
-};
 
 export const fetcher = async (url, options = {}) => {
   const { skipAuth, ...restOptions } = options;

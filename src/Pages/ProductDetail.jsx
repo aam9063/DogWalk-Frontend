@@ -6,7 +6,6 @@ import { FaArrowLeft, FaShoppingCart, FaMinus, FaPlus } from 'react-icons/fa';
 import Navbar from '../Components/Navbar';
 import Footer from '../Components/Footer';
 import articleService from '../Services/articleService';
-import cartService from '../Services/cartService';
 import useAuthStore from '../store/authStore';
 import useCartStore from '../store/cartStore';
 import AuthPopup from '../Components/Common/AuthPopup';
@@ -16,7 +15,7 @@ const ProductDetail = () => {
   const { productId } = useParams();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
-  const { open: openCart } = useCartStore();
+  const { open: openCart, addItem } = useCartStore();
   
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -47,9 +46,19 @@ const ProductDetail = () => {
   
   // Función para obtener la imagen por defecto según la categoría
   const getDefaultImageByCategory = (category) => {
-    // Convertir a minúsculas y eliminar acentos para una comparación más robusta
-    const normalizedCategory = category.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    // Primero, asegurémonos de que category existe y es un string
+    if (!category || typeof category !== 'string') {
+      console.warn('Categoría no válida:', category);
+      return '/imgs/DogWalkLogo.jpg';
+    }
+
+    // Normalizar la categoría exactamente como viene del backend
+    const normalizedCategory = category.toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
     
+    console.log('Categoría normalizada:', normalizedCategory); // Para debugging
+
     switch (normalizedCategory) {
       case 'juguete':
         return '/imgs/juguete.jpg';
@@ -66,6 +75,7 @@ const ProductDetail = () => {
       case 'ropa':
         return '/imgs/ropa.png';
       default:
+        console.warn('Categoría no encontrada:', normalizedCategory);
         return '/imgs/DogWalkLogo.jpg';
     }
   };
@@ -136,9 +146,10 @@ const ProductDetail = () => {
 
     try {
       setIsAddingToCart(true);
-      await cartService.addItem(product.id, quantity);
+      await addItem(product.id, quantity);
       setShowToast(true);
       setTimeout(() => setShowToast(false), 3000);
+      openCart();
     } catch (error) {
       console.error('Error al añadir al carrito:', error);
       alert('Error al añadir el producto al carrito');
@@ -221,13 +232,19 @@ const ProductDetail = () => {
                   alt={product.nombre}
                   className="absolute inset-0 object-contain w-full h-full"
                   onError={(e) => {
-                    console.log('Error al cargar imagen en posición', currentImageIndex);
+                    console.error('Error al cargar imagen:', images[currentImageIndex]);
                     e.target.onerror = null;
                     
-                    // Si la imagen actual falla, intentar usar la imagen por defecto de categoría
+                    // Intentar cargar la imagen por defecto de la categoría
                     const defaultImg = getDefaultImageByCategory(product.categoria);
-                    console.log('Usando imagen por defecto:', defaultImg);
+                    console.log('Intentando cargar imagen por defecto:', defaultImg);
                     e.target.src = defaultImg;
+                    
+                    // Si la imagen por defecto también falla, usar directamente el logo
+                    e.target.onerror = () => {
+                      console.error('Error al cargar imagen por defecto');
+                      e.target.src = '/imgs/DogWalkLogo.jpg';
+                    };
                   }}
                 />
                 

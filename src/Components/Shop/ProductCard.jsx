@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
-import {  useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import useAuthStore from '../../store/authStore';
-import cartService from '../../Services/cartService';
+import useCartStore from '../../store/cartStore';
 import AuthPopup from '../Common/AuthPopup';
 import Toast from '../Common/Toast';
 
-const ProductCard = ({ product, onCartUpdate }) => {
+const ProductCard = ({ product }) => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
+  const { addItem, open: openCart } = useCartStore();
   const [isAuthPopupOpen, setIsAuthPopupOpen] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [error, setError] = useState(null);
   
   // Formatear el precio con 2 decimales y símbolo de euro
   const formatPrice = (price) => {
@@ -23,7 +25,6 @@ const ProductCard = ({ product, onCartUpdate }) => {
 
   // Obtener imagen por defecto según la categoría
   const getDefaultImageByCategory = (category) => {
-    // Convertir a minúsculas y eliminar acentos para una comparación más robusta
     const normalizedCategory = category.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     
     switch (normalizedCategory) {
@@ -51,7 +52,7 @@ const ProductCard = ({ product, onCartUpdate }) => {
     navigate(`/tienda/producto/${product.id}`);
   };
 
-  // Función para añadir al carrito
+  // Función para añadir al carrito actualizada
   const handleAddToCart = async (e) => {
     e.stopPropagation(); // Evita que se propague al padre (navegación)
     
@@ -61,26 +62,20 @@ const ProductCard = ({ product, onCartUpdate }) => {
     }
 
     try {
-      await cartService.addItem(product.id, 1);
-      if (onCartUpdate) {
-        onCartUpdate();
-      }
+      await addItem(product.id, 1);
       setShowToast(true);
-      // Cerrar el toast después de 5 segundos
       setTimeout(() => setShowToast(false), 5000);
     } catch (error) {
       console.error('Error al añadir al carrito:', error);
-      alert('Error al añadir el producto al carrito');
+      setError('No se pudo añadir el producto al carrito. Por favor, inténtalo de nuevo.');
+      setTimeout(() => setError(null), 5000); // Limpiar el error después de 5 segundos
     }
   };
 
   const handleViewCart = (e) => {
     e.stopPropagation();
     setShowToast(false);
-    // Aquí disparamos el evento para abrir el carrito
-    if (onCartUpdate) {
-      onCartUpdate(true); // Pasamos true para indicar que queremos abrir el carrito
-    }
+    openCart(); // Usamos la función del store para abrir el carrito
   };
 
   return (
@@ -159,6 +154,13 @@ const ProductCard = ({ product, onCartUpdate }) => {
             }
           </div>
         </div>
+
+        {/* Añadimos mensaje de error */}
+        {error && (
+          <div className="absolute top-0 left-0 right-0 p-2 text-sm text-white bg-red-500">
+            {error}
+          </div>
+        )}
       </motion.div>
 
       {/* Auth Popup */}

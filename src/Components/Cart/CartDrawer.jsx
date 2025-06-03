@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 // eslint-disable-next-line
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaTrash, FaPlus, FaMinus, FaShoppingBag } from 'react-icons/fa';
@@ -6,9 +6,15 @@ import cartService from '../../Services/cartService';
 import checkoutService from '../../Services/checkoutService';
 import useCartStore from '../../store/cartStore';
 
-const CartDrawer = ({ cart, onCartUpdate }) => {
-  const { isOpen, close } = useCartStore();
+const CartDrawer = () => {
+  const { isOpen, close, cart, updateCart } = useCartStore();
   const [isProcessing, setIsProcessing] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      updateCart();
+    }
+  }, [isOpen, updateCart]);
 
   const getDefaultImageByCategory = (category) => {
     if (!category) return '/imgs/DogWalkLogo.jpg';
@@ -41,7 +47,7 @@ const CartDrawer = ({ cart, onCartUpdate }) => {
       if (newQuantity < 0) return;
       
       await cartService.updateItemQuantity(itemId, newQuantity);
-      onCartUpdate();
+      await updateCart();
     } catch (error) {
       console.error('Error al actualizar cantidad:', error);
     }
@@ -50,7 +56,7 @@ const CartDrawer = ({ cart, onCartUpdate }) => {
   const handleRemoveItem = async (itemId) => {
     try {
       await cartService.removeItem(itemId);
-      onCartUpdate();
+      await updateCart();
     } catch (error) {
       console.error('Error al eliminar item:', error);
     }
@@ -59,7 +65,7 @@ const CartDrawer = ({ cart, onCartUpdate }) => {
   const handleClearCart = async () => {
     try {
       await cartService.clearCart();
-      onCartUpdate();
+      await updateCart();
     } catch (error) {
       console.error('Error al vaciar el carrito:', error);
     }

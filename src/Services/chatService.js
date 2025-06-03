@@ -11,7 +11,7 @@ class ChatService {
       connectionReconnecting: () => {},
       connectionReconnected: () => {},
     };
-    this.baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5204';
+    this.baseUrl = import.meta.env.VITE_API_URL;
     this.isConnecting = false;
     this.connectionPromise = null;
     this.maxRetries = 3;
