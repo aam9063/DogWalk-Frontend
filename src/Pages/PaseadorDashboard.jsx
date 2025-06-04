@@ -100,9 +100,7 @@ const PaseadorDashboard = () => {
     const loadProfileData = async () => {
       try {
         const data = await getPaseadorProfile();
-        console.log('Datos del perfil cargados:', data);
         setProfileData(data);
-        // Actualizar también el formulario de edición con los datos más recientes
         setEditProfileForm({
           nombre: data.nombre || '',
           apellido: data.apellido || '',
@@ -125,7 +123,6 @@ const PaseadorDashboard = () => {
   const reloadProfileData = async () => {
     try {
       const data = await getPaseadorProfile();
-      console.log('Recargando datos del perfil:', data);
       setProfileData(data);
       setEditProfileForm({
         nombre: data.nombre || '',

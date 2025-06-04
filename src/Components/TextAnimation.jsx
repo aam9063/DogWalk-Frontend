@@ -27,48 +27,61 @@ const TextAnimation = ({
     const element = textRef.current;
     let animation;
 
-    if (element) {
-      // Crear la división de texto basada en el tipo
-      const splitOption = {};
-      splitOption[type] = true;
-      
-      // Aplicar SplitText
-      try {
-        splitRef.current = new SplitText(element, splitOption);
-        const targets = splitRef.current[type];
+    // Función para inicializar la animación
+    const initAnimation = () => {
+      if (element) {
+        // Crear la división de texto basada en el tipo
+        const splitOption = {};
+        splitOption[type] = true;
+        
+        // Aplicar SplitText
+        try {
+          splitRef.current = new SplitText(element, splitOption);
+          const targets = splitRef.current[type];
 
-        // Animar los elementos divididos
-        animation = gsap.fromTo(
-          targets,
-          { 
-            opacity: 0, 
-            y: y 
-          },
-          { 
-            opacity: 1, 
-            y: 0, 
-            stagger: stagger,
-            duration: duration,
-            delay: delay,
-            ease: "power3.out"
+          // Animar los elementos divididos
+          animation = gsap.fromTo(
+            targets,
+            { 
+              opacity: 0, 
+              y: y 
+            },
+            { 
+              opacity: 1, 
+              y: 0, 
+              stagger: stagger,
+              duration: duration,
+              delay: delay,
+              ease: "power3.out"
+            }
+          );
+
+          // Configurar ScrollTrigger si se proporciona
+          if (trigger) {
+            ScrollTrigger.create({
+              trigger: trigger === "self" ? element : trigger,
+              start: start,
+              onEnter: () => animation.play(),
+              once: true
+            });
+
+            // Pausar la animación inicialmente
+            animation.pause();
           }
-        );
-
-        // Configurar ScrollTrigger si se proporciona
-        if (trigger) {
-          ScrollTrigger.create({
-            trigger: trigger === "self" ? element : trigger,
-            start: start,
-            onEnter: () => animation.play(),
-            once: true
-          });
-
-          // Pausar la animación inicialmente
-          animation.pause();
+        } catch (error) {
+          console.error("Error al aplicar SplitText:", error);
         }
-      } catch (error) {
-        console.error("Error al aplicar SplitText:", error);
       }
+    };
+
+    // Esperar a que las fuentes se carguen antes de inicializar la animación
+    if (document.fonts) {
+      document.fonts.ready.then(() => {
+        initAnimation();
+      });
+    } else {
+      // Fallback para navegadores que no soportan document.fonts
+      setTimeout(initAnimation, 500);
     }
 
     return () => {

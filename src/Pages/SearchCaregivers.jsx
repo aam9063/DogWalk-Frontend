@@ -191,7 +191,6 @@ const SearchCaregivers = () => {
     setLoading(true);
     try {
       const data = await caregiverService.getAll({}, paginacion.paginaActual, paginacion.elementosPorPagina);
-      console.log("Datos iniciales cargados:", data);
       
       // Actualizar el estado con los datos paginados
       setCuidadores(data.items || []);
@@ -235,7 +234,6 @@ const SearchCaregivers = () => {
         paginacion.paginaActual,
         paginacion.elementosPorPagina
       );
-      console.log("Datos filtrados:", data);
       
       // Actualizar el estado con los datos paginados
       setCuidadores(data.items || []);
@@ -284,7 +282,6 @@ const SearchCaregivers = () => {
     let mapInitialized = false;
     
     try {
-      console.log("Intentando inicializar el mapa...");
       mapInstance = new mapboxgl.Map({
         container: mapContainerRef.current,
         style: 'mapbox://styles/mapbox/streets-v12',
@@ -295,7 +292,6 @@ const SearchCaregivers = () => {
       mapInstance.addControl(new mapboxgl.NavigationControl(), 'top-right');
       
       mapInstance.once('load', () => {
-        console.log('Mapa cargado correctamente');
         setMap(mapInstance);
         mapInitialized = true;
         
@@ -314,7 +310,6 @@ const SearchCaregivers = () => {
     // Cleanup
     return () => {
       if (mapInstance && mapInitialized) {
-        console.log("Limpiando mapa...");
         // Limpiar marcadores
         if (markers && markers.length) {
           markers.forEach(marker => {

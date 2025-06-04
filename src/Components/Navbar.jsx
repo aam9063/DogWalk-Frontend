@@ -117,10 +117,8 @@ const Navbar = forwardRef((props, ref) => {
   const handleSearch = useCallback((e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      // Aquí irá la lógica de búsqueda cuando tengamos contenido
       console.log('Búsqueda:', searchQuery);
       
-      // Por ahora, simplemente cerramos la barra y limpiamos la consulta
       closeSearch();
       setSearchQuery('');
     }
@@ -177,9 +175,7 @@ const Navbar = forwardRef((props, ref) => {
     closeUserMenu();
   }, [navigate, closeUserMenu, user?.rol]);
   
-  // Debug info - solo para desarrollo
   useEffect(() => {
-    console.log('Estado de autenticación:', { isAuthenticated, user, token: localStorage.getItem('token') });
   }, [isAuthenticated, user]);
 
   // Actualizar el carrito cuando cambie el estado de autenticación

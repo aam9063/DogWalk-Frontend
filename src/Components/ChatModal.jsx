@@ -277,7 +277,6 @@ const ChatModal = ({ isOpen, onClose, recipientId, recipientName, recipientType 
             ) : (
               messages.map((message) => {
                 const isOwnMessage = message.enviadorId === user?.userId;
-                console.log('Renderizando mensaje:', message);
                 return (
                   <div
                     key={message.id}

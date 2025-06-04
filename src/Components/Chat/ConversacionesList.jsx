@@ -16,7 +16,6 @@
             'http://localhost:5204/api/Chat/conversaciones',
             { headers: { Authorization: `Bearer ${token}` } }
           );
-          console.log("Conversaciones recibidas:", response.data); // <--- LOG
           setConversaciones(response.data);
           setCargando(false);
         } catch (error) {

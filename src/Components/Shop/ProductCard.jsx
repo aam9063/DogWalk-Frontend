@@ -92,7 +92,6 @@ const ProductCard = ({ product }) => {
               alt={product.nombre}
               className="absolute inset-0 object-cover w-full h-full"
               onError={(e) => {
-                console.log('Error al cargar la imagen principal:', product.imagenPrincipal);
                 e.target.onerror = null;
                 e.target.src = getDefaultImageByCategory(product.categoria);
               }}
@@ -104,7 +103,6 @@ const ProductCard = ({ product }) => {
               className="absolute inset-0 object-cover w-full h-full"
               onError={(e) => {
                 // Si falla la carga de la imagen específica, muestra un fallback visual
-                console.log('Error al cargar la imagen de categoría, usando fallback');
                 e.target.onerror = null;
                 e.target.src = '/imgs/DogWalkLogo.jpg';
               }}

@@ -60,7 +60,6 @@ const PaseadorProfile = () => {
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
 
   const loadProfileData = useCallback(async () => {
-    console.log('Iniciando carga de perfil...', { paseadorId });
     if (!paseadorId) {
       console.error('ID de paseador no válido');
       setError('ID de paseador no válido');
@@ -71,15 +70,11 @@ const PaseadorProfile = () => {
     try {
       setLoading(true);
       setError(null);
-      console.log('Cargando datos...');
-
       const [profileData, rankingData, valoracionesData] = await Promise.all([
         paseadorProfileService.getProfile(paseadorId),
         paseadorProfileService.getRankingResumen(paseadorId),
         paseadorProfileService.getValoraciones(paseadorId)
       ]);
-
-      console.log('Datos cargados:', { profileData, rankingData, valoracionesData });
 
       if (!profileData) {
         throw new Error('No se pudo cargar el perfil del paseador');
@@ -89,7 +84,6 @@ const PaseadorProfile = () => {
       if (profileData.coordenadas && 
           typeof profileData.coordenadas.latitud === 'number' && 
           typeof profileData.coordenadas.longitud === 'number') {
-        console.log('Coordenadas válidas:', profileData.coordenadas);
         setProfile({
           ...profileData,
           coordenadas: {
@@ -98,19 +92,16 @@ const PaseadorProfile = () => {
           }
         });
       } else {
-        console.log('Sin coordenadas válidas');
         setProfile(profileData);
       }
 
       setRanking(rankingData);
       setValoraciones(valoracionesData || []);
-      console.log('Estados actualizados correctamente');
     } catch (err) {
       console.error('Error detallado:', err);
       setError('Error al cargar la información del paseador');
     } finally {
       setLoading(false);
-      console.log('Carga finalizada');
     }
   }, [paseadorId]);
 
@@ -158,7 +149,6 @@ const PaseadorProfile = () => {
         // Agregar marcador si hay coordenadas
         if (profile?.coordenadas?.latitud && profile?.coordenadas?.longitud) {
           const { latitud, longitud } = profile.coordenadas;
-          console.log('Agregando marcador en:', { latitud, longitud });
           
           const marker = new mapboxgl.Marker({
             color: '#34D399'
@@ -391,16 +381,6 @@ const PaseadorProfile = () => {
       // Formatear la fecha al formato esperado por el backend
       const fechaISO = fechaServicioDate.toISOString();
       
-      // Log para debugging
-      console.log('Fecha construida:', {
-        original: selectedDate,
-        horaInicio: selectedFechaHora.horaInicio,
-        fechaFinal: fechaServicioDate,
-        fechaISO: fechaISO,
-        timeZoneOffset: fechaServicioDate.getTimezoneOffset(),
-        selectedFechaHora
-      });
-      
       if (isNaN(fechaServicioDate.getTime())) {
         throw new Error('Fecha y hora inválidas');
       }
@@ -414,9 +394,6 @@ const PaseadorProfile = () => {
         direccionEntrega: direccionEntrega.trim(),
         notas: notasReserva.trim() || null
       };
-
-      // Log detallado de los datos de la reserva
-      console.log('Datos de la reserva a enviar:', JSON.stringify(reservaData, null, 2));
 
       setLoadingReserva(true);
       await reservaService.crearReserva(reservaData);

@@ -90,7 +90,6 @@ const Contact = () => {
     try {
       // Simulación de envío (aquí se integraría con un servicio real)
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log("Datos enviados:", formData);
       setEnviado(true);
       setFormData({
         nombre: "",

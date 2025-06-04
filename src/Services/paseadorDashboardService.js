@@ -22,16 +22,13 @@ export const getPaseadorDashboard = async () => {
 // Obtener el perfil privado del paseador
 export const getPaseadorProfile = async () => {
   try {
-    console.log('Solicitando datos del perfil al endpoint /api/Paseador/profile');
     // Obtener el perfil básico
     const profileResponse = await sendRequest('/api/Paseador/profile');
-    console.log('Respuesta del GET profile:', profileResponse);
 
     // Obtener las valoraciones
     const valoracionesResponse = await sendRequest(`/api/RankingPaseador/paseador/${profileResponse.id}`, {
       method: 'GET'
     });
-    console.log('Respuesta de valoraciones:', valoracionesResponse);
 
     // Formatear la valoración promedio
     if (profileResponse && typeof profileResponse.valoracionPromedio === 'number') {
@@ -44,7 +41,6 @@ export const getPaseadorProfile = async () => {
       valoraciones: valoracionesResponse || []
     };
 
-    console.log('Datos combinados del perfil:', combinedResponse);
     return combinedResponse;
   } catch (error) {
     console.error('Error al obtener el perfil:', error);
@@ -68,23 +64,14 @@ export const getPaseadorReservas = async () => {
 // Actualizar el perfil del paseador
 export const updatePaseadorProfile = async (profileData) => {
   try {
-    console.log('Datos enviados en PUT al backend:', {
-      endpoint: '/api/Paseador/profile',
-      method: 'PUT',
-      data: profileData
-    });
-
     const response = await sendRequest('/api/Paseador/profile', {
       method: 'PUT',
       body: profileData
     });
-
-    console.log('Respuesta del PUT profile:', response);
     
     // Hacer un GET inmediato para verificar los datos
     const updatedData = await getPaseadorProfile();
-    console.log('Datos después de actualizar (GET inmediato):', updatedData);
-    
+    console.log('Datos después de actualizar :', updatedData);
     return response;
   } catch (error) {
     console.error('Error en la actualización:', error);

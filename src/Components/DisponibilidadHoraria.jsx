@@ -38,7 +38,6 @@ const DisponibilidadHoraria = () => {
         intervaloMinutos: parseInt(intervaloMinutos)
       };
 
-      console.log('Enviando disponibilidad:', disponibilidad);
       await crearDisponibilidadHoraria(disponibilidad);
       toast.success('Disponibilidad horaria creada con éxito');
       

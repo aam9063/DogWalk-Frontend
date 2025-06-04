@@ -47,7 +47,6 @@ const articleService = {
           img && typeof img === 'string' && img.trim() !== ''
         );
         
-        console.log('Producto cargado:', response);
       }
       
       return response;
@@ -113,9 +112,6 @@ const articleService = {
           []
       };
 
-      console.log('ID del artículo:', id);
-      console.log('Datos formateados para enviar:', formattedData);
-
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/Articulo/${id}`, {
         method: 'PUT',
         headers: {
@@ -145,9 +141,7 @@ const articleService = {
 
   // Eliminar un artículo
   delete: async (id) => {
-    try {
-      console.log('Eliminando artículo:', id);
-      
+    try {      
       await sendRequest(`/api/Articulo/${id}`, {
         method: 'DELETE'
       });
@@ -159,9 +153,7 @@ const articleService = {
 
   // Actualizar stock de un artículo
   updateStock: async (id, cantidad) => {
-    try {
-      console.log('Actualizando stock:', { id, cantidad });
-      
+    try {      
       await sendRequest(`/api/Articulo/${id}/stock`, {
         method: 'PATCH',
         body: cantidad // Enviamos directamente el incremento/decremento

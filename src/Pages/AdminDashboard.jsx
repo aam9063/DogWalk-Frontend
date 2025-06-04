@@ -221,17 +221,13 @@ const AdminDashboard = () => {
       }
 
       const categoria = Number(articleForm.categoria);
-      console.log('Validando categoría:', {
-        original: articleForm.categoria,
-        convertida: categoria
-      });
+      
 
       if (isNaN(categoria) || categoria < 0) {
         toast.error('Debes seleccionar una categoría válida');
         return;
       }
 
-      // Formatear datos según UpdateArticuloDto
       const formattedArticle = {
         nombre: articleForm.nombre.trim(),
         descripcion: articleForm.descripcion.trim(),
@@ -242,9 +238,6 @@ const AdminDashboard = () => {
           []
       };
 
-      console.log('ID del artículo:', selectedArticle.id);
-      console.log('Datos del formulario:', articleForm);
-      console.log('Datos formateados para enviar:', formattedArticle);
 
       await articleService.update(selectedArticle.id, formattedArticle);
       toast.success('Artículo actualizado correctamente');
@@ -264,7 +257,6 @@ const AdminDashboard = () => {
       message: '¿Estás seguro de que deseas eliminar este artículo? Esta acción no se puede deshacer.',
       onConfirm: async () => {
         try {
-          console.log('Intentando eliminar artículo:', id);
           await articleService.delete(id);
           toast.success('Artículo eliminado correctamente');
           await loadArticlesByCategory();
@@ -833,10 +825,6 @@ const AdminDashboard = () => {
                                     <button
                                       onClick={() => {
                                         const categoriaNum = Number(article.categoria);
-                                        console.log('Artículo seleccionado para editar:', {
-                                          ...article,
-                                          categoria: categoriaNum
-                                        });
                                         setSelectedArticle(article);
                                         setArticleForm({
                                           nombre: article.nombre || '',
@@ -1000,10 +988,6 @@ const AdminDashboard = () => {
                     value={articleForm.categoria}
                     onChange={(e) => {
                       const categoriaNum = Number(e.target.value);
-                      console.log('Valor seleccionado:', {
-                        original: e.target.value,
-                        convertido: categoriaNum
-                      });
                       setArticleForm({
                         ...articleForm,
                         categoria: categoriaNum

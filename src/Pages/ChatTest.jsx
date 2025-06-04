@@ -13,14 +13,11 @@ const ChatTest = () => {
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
-    // Configurar los manejadores de eventos para SignalR
     chatService.onMessageReceived((mensaje) => {
       setMessages(prev => [...prev, mensaje]);
-      console.log('Mensaje recibido:', mensaje);
     });
 
     chatService.onMessageRead((messageId) => {
-      console.log('Mensaje leído:', messageId);
       setMessages(prev => prev.map(m => 
         m.id === messageId ? { ...m, leido: true } : m
       ));
@@ -33,7 +30,6 @@ const ChatTest = () => {
     };
   }, [connected]);
 
-  // Añade esto a ChatTest.jsx
 const handleConnect = async () => {
   if (!token) {
     setErrorMsg('Por favor, ingresa un token válido');
@@ -52,7 +48,6 @@ const handleConnect = async () => {
     const decoded = atob(payload);
     const parsed = JSON.parse(decoded);
     
-    console.log("Token decodificado:", parsed);
     
     if (!parsed.sub) {
       setErrorMsg('Token inválido: no contiene el claim "sub"');
@@ -63,7 +58,6 @@ const handleConnect = async () => {
     return;
   }
   
-  // Continúa con la conexión...
   try {
     const success = await chatService.connect(token);
     setConnected(success);

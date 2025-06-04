@@ -2,10 +2,7 @@ import { sendRequest } from './api';
 
 const reservaService = {
   crearReserva: async (reservaData) => {
-    try {
-      console.log('URL de la API:', import.meta.env.VITE_API_URL);
-      console.log('Datos enviados al backend:', JSON.stringify(reservaData, null, 2));
-      
+    try {      
       // Validaciones adicionales
       if (!reservaData.paseadorId || !reservaData.perroId || !reservaData.servicioId) {
         throw new Error('Faltan IDs requeridos para la reserva');
@@ -16,7 +13,6 @@ const reservaService = {
         body: reservaData
       });
 
-      console.log('Respuesta del backend:', response);
       return response;
     } catch (error) {
       console.error('Error detallado de la reserva:', {

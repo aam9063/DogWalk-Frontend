@@ -17,19 +17,19 @@ const testimonials = [
     id: 1,
     name: 'Patricia',
     image: 'https://randomuser.me/api/portraits/women/44.jpg',
-    text: 'Me gustaría indicar que el tiempo que estuvimos con los padres nos encantó, ella fue fabulosa. Ellos se divirtieron y nosotros recibimos fotos de cada momento. Repetiremos.'
+    text: 'Me gustaría indicar que el tiempo que mi perro estuvo con Carlos me encantó, fue fabuloso. Ellos se divirtieron y recibí fotos de cada momento. Repetiré.'
   },
   {
     id: 2,
     name: 'Albert',
     image: 'https://randomuser.me/api/portraits/men/32.jpg',
-    text: 'Me gustaría indicar que el tiempo que estuvimos con los padres nos encantó, ella fue fabulosa. Ellos se divirtieron y nosotros recibimos fotos de cada momento. Repetiremos.'
+    text: 'Me gustaría indicar que el tiempo que mi perro estuvo con Carlos me encantó, fue fabuloso. Ellos se divirtieron y recibí fotos de cada momento. Repetiré.'
   },
   {
     id: 3,
     name: 'Pedro',
     image: 'https://randomuser.me/api/portraits/men/67.jpg',
-    text: 'Me gustaría indicar que el tiempo que estuvimos con los padres nos encantó, ella fue fabulosa. Ellos se divirtieron y nosotros recibimos fotos de cada momento. Repetiremos.'
+    text: 'Me gustaría indicar que el tiempo que mi perro estuvo con Carlos me encantó, fue fabuloso. Ellos se divirtieron y recibí fotos de cada momento. Repetiré.'
   }
 ];
 

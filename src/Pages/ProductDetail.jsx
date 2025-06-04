@@ -57,7 +57,6 @@ const ProductDetail = () => {
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "");
     
-    console.log('Categoría normalizada:', normalizedCategory); // Para debugging
 
     switch (normalizedCategory) {
       case 'juguete':
@@ -120,7 +119,6 @@ const ProductDetail = () => {
       images.push(getDefaultImageByCategory(product.categoria));
     }
     
-    console.log('Imágenes del producto:', images);
     return images;
   };
   
@@ -237,7 +235,6 @@ const ProductDetail = () => {
                     
                     // Intentar cargar la imagen por defecto de la categoría
                     const defaultImg = getDefaultImageByCategory(product.categoria);
-                    console.log('Intentando cargar imagen por defecto:', defaultImg);
                     e.target.src = defaultImg;
                     
                     // Si la imagen por defecto también falla, usar directamente el logo
