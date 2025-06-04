@@ -47,8 +47,15 @@ const SmoothScrollLink = ({ to, className, children, onClick }) => {
       if (onClick) onClick();
     } 
     // Para navegación normal a otras páginas
-    else if (onClick) {
-      onClick();
+    else {
+      e.preventDefault();
+      navigate(to);
+      // Asegurarse de que la nueva página empiece desde arriba
+      window.scrollTo({
+        top: 0,
+        behavior: 'instant'
+      });
+      if (onClick) onClick();
     }
   };
 
