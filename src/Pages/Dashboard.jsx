@@ -3,13 +3,14 @@ import { useNavigate, Link } from 'react-router-dom';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import useAuthStore from '../store/authStore';
-import { FaHome, FaUser, FaDog, FaClipboardList, FaStar } from 'react-icons/fa';
+import { FaHome, FaUser, FaDog, FaClipboardList, FaStar, FaDownload } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import FadeIn from '../Components/FadeIn';
 import { getDashboardData, getUserProfile, updateUserProfile, getDogsList, createDog, updateDog, deleteDog, getReservasCompletadas } from '../Services/userDashboardService';
 import { gsap } from 'gsap';
 import { FixedSizeList as List } from 'react-window';
 import { enviarValoracion } from '../Services/rankingService';
+import facturaService from '../Services/facturaService';
 
 // Función de utilidad para formatear fechas de manera segura
 const formatearFecha = (fecha) => {
@@ -46,23 +47,38 @@ const LoadingIndicator = () => (
 // Componente para la fila de la tabla
 const CompraRow = ({ index, style, data }) => {
   const compra = data[index];
+  
+  const handleDescargarFactura = async () => {
+    try {
+      await facturaService.descargarFacturaPdf(compra.id);
+    } catch {
+      toast.error('Error al descargar la factura');
+    }
+  };
+
   return (
     <motion.div
       style={style}
       className="flex items-center border-b hover:bg-gray-50"
       whileHover={{ scale: 1.005 }}
     >
-      <div className="w-[20%] p-3 whitespace-nowrap">
+      <div className="w-[25%] p-3 whitespace-nowrap">
         {new Date(compra.fechaCompra).toLocaleDateString('es-ES', {
           day: '2-digit',
           month: '2-digit',
           year: 'numeric'
         })}
       </div>
-      <div className="w-[60%] p-3 font-mono text-sm truncate" title={compra.numeroFactura}>
-        {compra.numeroFactura}
+      <div className="w-[50%] p-3 font-mono text-sm truncate" title={compra.numeroFactura}>
+        <button
+          onClick={handleDescargarFactura}
+          className="flex items-center gap-2 text-dog-green hover:text-dog-light-green"
+        >
+          <span className="truncate">{compra.numeroFactura}</span>
+          <FaDownload className="flex-shrink-0" />
+        </button>
       </div>
-      <div className="w-[20%] p-3 text-right whitespace-nowrap">
+      <div className="w-[25%] p-3 text-right whitespace-nowrap">
         {compra.total.toFixed(2)} €
       </div>
     </motion.div>
@@ -586,12 +602,11 @@ const Dashboard = () => {
                         <div className="border rounded-lg shadow-sm">
                           {/* Encabezados de la tabla */}
                           <div className="flex border-b bg-gray-50">
-                            <div className="w-[30%] sm:w-[25%] p-2 sm:p-3 font-semibold text-left text-sm sm:text-base">Fecha</div>
-                            <div className="w-[40%] sm:w-[45%] p-2 sm:p-3 font-semibold text-left text-sm sm:text-base">
-                              <span className="hidden sm:inline">Nº Factura</span>
-                              <span className="sm:hidden">Factura</span>
+                            <div className="w-[25%] p-3 font-semibold text-left text-sm">Fecha</div>
+                            <div className="w-[50%] p-3 font-semibold text-left text-sm">
+                              Nº Factura
                             </div>
-                            <div className="w-[30%] p-2 sm:p-3 font-semibold text-right text-sm sm:text-base">Total</div>
+                            <div className="w-[25%] p-3 font-semibold text-right text-sm">Total</div>
                           </div>
                           
                           {/* Lista virtual */}
@@ -604,41 +619,15 @@ const Dashboard = () => {
                               itemData={dashboardData.historialCompras}
                               className="scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
                             >
-                              {({ index, style, data }) => {
-                                const compra = data[index];
-                                return (
-                                  <motion.div
-                                    style={style}
-                                    className="flex items-center border-b hover:bg-gray-50"
-                                    whileHover={{ scale: 1.005 }}
-                                  >
-                                    <div className="w-[30%] sm:w-[25%] p-2 sm:p-3 text-sm whitespace-nowrap">
-                                      {new Date(compra.fechaCompra).toLocaleDateString('es-ES', {
-                                        day: '2-digit',
-                                        month: '2-digit',
-                                        year: '2-digit'
-                                      })}
-                                    </div>
-                                    <div className="w-[40%] sm:w-[45%] p-2 sm:p-3 font-mono text-xs sm:text-sm truncate" title={compra.numeroFactura}>
-                                      <span className="hidden sm:inline">{compra.numeroFactura}</span>
-                                      <span className="sm:hidden">
-                                        {compra.numeroFactura.substring(0, 6)}...
-                                      </span>
-                                    </div>
-                                    <div className="w-[30%] p-2 sm:p-3 text-right text-sm whitespace-nowrap">
-                                      {compra.total.toFixed(2)}€
-                                    </div>
-                                  </motion.div>
-                                );
-                              }}
+                              {CompraRow}
                             </List>
                           </div>
                           
                           {/* Pie de tabla con el total */}
                           <div className="flex border-t bg-gray-50">
-                            <div className="w-[30%] sm:w-[25%] p-2 sm:p-3"></div>
-                            <div className="w-[40%] sm:w-[45%] p-2 sm:p-3"></div>
-                            <div className="w-[30%] p-2 sm:p-3 font-bold text-right text-sm sm:text-base">
+                            <div className="w-[25%] p-3"></div>
+                            <div className="w-[50%] p-3"></div>
+                            <div className="w-[25%] p-3 font-bold text-right text-sm">
                               {dashboardData.historialCompras.reduce((total, compra) => total + compra.total, 0).toFixed(2)}€
                             </div>
                           </div>
