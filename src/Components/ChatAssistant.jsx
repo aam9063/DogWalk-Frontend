@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { FaTimes, FaPaperPlane } from 'react-icons/fa';
 import { toast } from 'react-toastify';
-import assistantService from '../services/assistantService';
+import assistantService from '../Services/assistantService';
 
 const ChatAssistant = ({ externalShowChat, onClose }) => {
   const [showChat, setShowChat] = useState(externalShowChat || false);
