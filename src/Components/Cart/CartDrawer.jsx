@@ -77,7 +77,8 @@ const CartDrawer = () => {
       const response = await checkoutService.createCheckoutSession();
       
       if (response.success && response.redirectUrl) {
-        window.location.href = response.redirectUrl;
+        const redirectPath = new URL(response.redirectUrl).pathname;
+        window.location.href = redirectPath;
       }
     } catch (error) {
       console.error('Error al procesar el checkout:', error);
