@@ -77,7 +77,12 @@ const CartDrawer = () => {
       const response = await checkoutService.createCheckoutSession();
       
       if (response.success && response.redirectUrl) {
-        window.location.href = response.redirectUrl;
+        // Extraer el pathname y los parámetros de búsqueda de la URL
+        const url = new URL(response.redirectUrl);
+        const redirectPath = url.pathname + url.search; // Incluimos el session_id de Stripe
+        
+        // Usar la URL relativa con los parámetros de búsqueda
+        window.location.href = redirectPath;
       }
     } catch (error) {
       console.error('Error al procesar el checkout:', error);
